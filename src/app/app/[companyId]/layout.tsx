@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckSquare, FilePlus2, FileText, Kanban, LayoutDashboard, Package, Plus, Settings, Users } from "lucide-react";
+import { BarChart3, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Settings, Truck, Users } from "lucide-react";
+import { can } from "@/modules/core/permissions";
 import { requireUser } from "@/lib/session";
 import { listCompaniesForUser } from "@/modules/core/companies";
 import { ForbiddenError, requireMembership } from "@/modules/core/tenant";
@@ -14,8 +15,9 @@ export default async function CompanyLayout({
 }) {
   const { companyId } = await params;
   const user = await requireUser();
+  let membership: Awaited<ReturnType<typeof requireMembership>>;
   try {
-    await requireMembership(user.id, companyId);
+    membership = await requireMembership(user.id, companyId);
   } catch (e) {
     if (e instanceof ForbiddenError) notFound();
     throw e;
@@ -23,31 +25,62 @@ export default async function CompanyLayout({
   const companies = await listCompaniesForUser(user.id);
   const current = companies.find((c) => c.id === companyId);
 
-  const nav = [
-    { href: `/app/${companyId}`, label: "Vue d'ensemble", icon: LayoutDashboard },
-    { href: `/app/${companyId}/contacts`, label: "Contacts", icon: Users },
-    { href: `/app/${companyId}/pipeline`, label: "Pipeline", icon: Kanban },
-    { href: `/app/${companyId}/tasks`, label: "Tâches", icon: CheckSquare },
-    { href: `/app/${companyId}/quotes`, label: "Devis", icon: FilePlus2 },
-    { href: `/app/${companyId}/invoices`, label: "Factures", icon: FileText },
-    { href: `/app/${companyId}/catalog`, label: "Catalogue", icon: Package },
-    { href: `/app/${companyId}/settings`, label: "Paramètres", icon: Settings },
+  const b = `/app/${companyId}`;
+  const finance = can(membership.role, "finance:read");
+  const groups: { title?: string; items: { href: string; label: string; icon: typeof Users }[] }[] = [
+    { items: [{ href: b, label: "Vue d'ensemble", icon: LayoutDashboard }] },
+    {
+      title: "CRM",
+      items: [
+        { href: `${b}/contacts`, label: "Contacts", icon: Users },
+        { href: `${b}/pipeline`, label: "Pipeline", icon: Kanban },
+        { href: `${b}/tasks`, label: "Tâches", icon: CheckSquare },
+      ],
+    },
+    {
+      title: "Ventes",
+      items: [
+        { href: `${b}/quotes`, label: "Devis", icon: FilePlus2 },
+        { href: `${b}/invoices`, label: "Factures", icon: FileText },
+        { href: `${b}/catalog`, label: "Catalogue", icon: Package },
+      ],
+    },
+    ...(finance
+      ? [
+          {
+            title: "Finances",
+            items: [
+              { href: `${b}/income`, label: "Recettes", icon: HandCoins },
+              { href: `${b}/expenses`, label: "Dépenses", icon: Receipt },
+              { href: `${b}/treasury`, label: "Trésorerie", icon: Landmark },
+              { href: `${b}/suppliers`, label: "Fournisseurs", icon: Truck },
+              { href: `${b}/reports`, label: "Rapports", icon: BarChart3 },
+            ],
+          },
+        ]
+      : []),
+    { title: "Organisation", items: [{ href: `${b}/settings`, label: "Paramètres", icon: Settings }] },
   ];
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[248px_1fr]">
       <aside className="border-b border-border bg-surface p-4 md:border-b-0 md:border-r">
         <div className="mb-6 px-2 text-base font-semibold tracking-tight">GGT</div>
-        <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex h-9 items-center gap-2.5 rounded-full px-3 text-sm text-muted hover:bg-accent-soft hover:text-text"
-            >
-              <item.icon className="size-4" aria-hidden />
-              {item.label}
-            </Link>
+        <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+          {groups.map((g, i) => (
+            <div key={i} className="flex gap-1 md:flex-col">
+              {g.title && <p className="hidden px-3 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-muted md:block">{g.title}</p>}
+              {g.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3 text-sm text-muted hover:bg-accent-soft hover:text-text"
+                >
+                  <item.icon className="size-4" aria-hidden />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="mt-6 hidden md:block">

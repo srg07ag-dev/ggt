@@ -381,6 +381,8 @@ export const payment = pgTable(
     invoiceId: uuid("invoice_id").notNull(),
     amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
     paidOn: date("paid_on").notNull(),
+    /** Compte de trésorerie crédité ; vide = paiement non affecté. */
+    accountId: uuid("account_id"),
     method: paymentMethodEnum("method").notNull(),
     reference: text("reference"),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
@@ -390,5 +392,120 @@ export const payment = pgTable(
   (t) => [
     index("payment_invoice_idx").on(t.companyId, t.invoiceId),
     foreignKey({ columns: [t.companyId, t.invoiceId], foreignColumns: [salesDocument.companyId, salesDocument.id] }),
+    foreignKey({ columns: [t.companyId, t.accountId], foreignColumns: [financeAccount.companyId, financeAccount.id] }),
+  ],
+);
+
+/* ---------- Finances : trésorerie, fournisseurs, recettes et dépenses ---------- */
+
+export const financeAccount = pgTable(
+  "finance_account",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: text("kind").notNull().default("bank"), // cash | bank | mobile_money | other
+    currency: text("currency").notNull(),
+    /** Solde au démarrage du suivi, en unités mineures (peut être négatif). */
+    openingBalanceMinor: bigint("opening_balance_minor", { mode: "number" }).notNull().default(0),
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique("finance_account_company_id_id").on(t.companyId, t.id)],
+);
+
+export const supplier = pgTable(
+  "supplier",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    address: text("address"),
+    taxId: text("tax_id"),
+    notes: text("notes"),
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique("supplier_company_id_id").on(t.companyId, t.id)],
+);
+
+export const entryKindEnum = pgEnum("entry_kind", ["income", "expense"]);
+
+export const financeCategory = pgTable(
+  "finance_category",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    kind: entryKindEnum("kind").notNull(),
+    name: text("name").notNull(),
+    archivedAt: timestamp("archived_at"),
+  },
+  (t) => [
+    unique("finance_category_company_id_id").on(t.companyId, t.id),
+    unique("finance_category_name").on(t.companyId, t.kind, t.name),
+  ],
+);
+
+/** Recettes diverses et dépenses. Les encaissements de factures vivent dans `payment`. Ajout seul + annulation. */
+export const financeEntry = pgTable(
+  "finance_entry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    accountId: uuid("account_id").notNull(),
+    kind: entryKindEnum("kind").notNull(),
+    amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+    /** Part de taxe incluse dans le montant, saisie par l'utilisateur (aucun calcul automatique). */
+    taxMinor: bigint("tax_minor", { mode: "number" }).notNull().default(0),
+    occurredOn: date("occurred_on").notNull(),
+    categoryId: uuid("category_id"),
+    supplierId: uuid("supplier_id"),
+    contactId: uuid("contact_id"),
+    description: text("description").notNull(),
+    reference: text("reference"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    voidedAt: timestamp("voided_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("finance_entry_idx").on(t.companyId, t.occurredOn),
+    unique("finance_entry_company_id_id").on(t.companyId, t.id),
+    foreignKey({ columns: [t.companyId, t.accountId], foreignColumns: [financeAccount.companyId, financeAccount.id] }),
+    foreignKey({ columns: [t.companyId, t.categoryId], foreignColumns: [financeCategory.companyId, financeCategory.id] }),
+    foreignKey({ columns: [t.companyId, t.supplierId], foreignColumns: [supplier.companyId, supplier.id] }),
+    foreignKey({ columns: [t.companyId, t.contactId], foreignColumns: [contact.companyId, contact.id] }),
+  ],
+);
+
+/** Justificatifs : le fichier est dans le stockage privé, jamais servi sans contrôle d'accès. */
+export const attachment = pgTable(
+  "attachment",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    entryId: uuid("entry_id").notNull(),
+    filename: text("filename").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    sha256: text("sha256").notNull(),
+    storageKey: text("storage_key").notNull().unique(),
+    uploadedBy: text("uploaded_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("attachment_entry_idx").on(t.companyId, t.entryId),
+    foreignKey({ columns: [t.companyId, t.entryId], foreignColumns: [financeEntry.companyId, financeEntry.id] }),
   ],
 );

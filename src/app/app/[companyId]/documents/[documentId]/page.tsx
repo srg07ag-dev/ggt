@@ -11,6 +11,7 @@ import { requireMembership } from "@/modules/core/tenant";
 import { formatRate } from "@/modules/sales/calc";
 import { listProducts, listTaxRates } from "@/modules/sales/catalog";
 import { getDocument } from "@/modules/sales/documents";
+import { listAccounts } from "@/modules/finance/finance";
 import {
   convertAction,
   creditNoteAction,
@@ -39,6 +40,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ compa
   const draft = doc.status === "draft";
   const money = (n: number) => formatMoney(n, doc.currency);
   const [products, taxes] = canWrite && draft ? await Promise.all([listProducts(user.id, companyId), listTaxRates(user.id, companyId)]) : [[], []];
+  const accounts = canWrite && doc.type === "invoice" && can(ctx.role, "finance:read") ? (await listAccounts(user.id, companyId)).filter((a) => !a.archived) : [];
   const back = doc.type === "quote" ? "quotes" : "invoices";
   const title = doc.number ?? `${TITLES[doc.type]} (brouillon)`;
 
@@ -153,7 +155,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ compa
                 <details className="mt-4 border-t border-border pt-4">
                   <summary className="cursor-pointer text-sm font-medium text-accent">+ Enregistrer un paiement</summary>
                   <div className="pt-4">
-                    <PaymentForm companyId={companyId} invoiceId={doc.id} today={todayIn(company.timezone)} currency={doc.currency} outstanding={formatPlain(settlement.outstandingMinor, doc.currency)} />
+                    <PaymentForm companyId={companyId} invoiceId={doc.id} today={todayIn(company.timezone)} currency={doc.currency} outstanding={formatPlain(settlement.outstandingMinor, doc.currency)} accounts={accounts} />
                   </div>
                 </details>
               )}

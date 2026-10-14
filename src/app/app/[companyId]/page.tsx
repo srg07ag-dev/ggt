@@ -8,6 +8,9 @@ import { countContactsByState } from "@/modules/crm/contacts";
 import { listOpportunities, listStages } from "@/modules/crm/pipeline";
 import { formatMoney } from "@/lib/money";
 import { salesSummary } from "@/modules/sales/documents";
+import { can } from "@/modules/core/permissions";
+import { requireMembership } from "@/modules/core/tenant";
+import { listAccounts } from "@/modules/finance/finance";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "Vue d'ensemble" };
@@ -15,6 +18,8 @@ export const metadata = { title: "Vue d'ensemble" };
 export default async function Dashboard({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
+  const ctx = await requireMembership(user.id, companyId);
+  const accounts = can(ctx.role, "finance:read") ? (await listAccounts(user.id, companyId)).filter((a) => !a.archived) : [];
   const [counts, tasks, opps, stages, sales] = await Promise.all([
     countContactsByState(user.id, companyId),
     countOpenActivities(user.id, companyId),
@@ -51,6 +56,9 @@ export default async function Dashboard({ params }: { params: Promise<{ companyI
         />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
+        {can(ctx.role, "finance:read") && (
+          <StatCard label="Trésorerie disponible" value={accounts.length ? formatMoney(accounts.reduce((n, a) => n + a.balanceMinor, 0), sales.currency) : null} emptyHint="Ajoutez un compte de trésorerie" featured />
+        )}
         <StatCard label="Facturé TTC (net d'avoirs)" value={sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null} emptyHint="Apparaît après votre première facture émise" />
         <StatCard label="Encaissé" value={sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null} emptyHint="Paiements enregistrés uniquement" />
         <StatCard

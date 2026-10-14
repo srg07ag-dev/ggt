@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   poweredByHeader: false,
+  experimental: { serverActions: { bodySizeLimit: "11mb" } },
   serverExternalPackages: ["postgres", "pdfkit"],
   async headers() {
     return [

@@ -378,10 +378,11 @@ export async function recordPayment(
   userId: string,
   companyId: string,
   invoiceId: string,
-  input: { amount: string; paidOn: string; method: string; reference?: string },
+  input: { amount: string; paidOn: string; method: string; reference?: string; accountId?: string },
 ) {
   const data = z
     .object({
+      accountId: z.string().uuid().optional(),
       paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
       method: z.enum(PAYMENT_METHODS),
       reference: z.string().trim().max(120).optional().transform((v) => v || null),
@@ -405,9 +406,14 @@ export async function recordPayment(
       .where(and(eq(schema.salesDocument.relatedId, invoiceId), eq(schema.salesDocument.type, "credit_note"), eq(schema.salesDocument.status, "issued")));
     const outstanding = inv.totalMinor - Number(paid) - Number(credited);
     if (amountMinor > outstanding) throw rule("Le paiement dépasse le solde restant dû.");
+    if (data.accountId) {
+      const [acc] = await tx.select().from(schema.financeAccount).where(eq(schema.financeAccount.id, data.accountId));
+      if (!acc) throw new ForbiddenError();
+      if (acc.archivedAt) throw rule("Ce compte est archivé.");
+    }
     const [row] = await tx
       .insert(schema.payment)
-      .values({ companyId, invoiceId, amountMinor, paidOn: data.paidOn, method: data.method, reference: data.reference, createdBy: userId })
+      .values({ companyId, invoiceId, amountMinor, paidOn: data.paidOn, accountId: data.accountId, method: data.method, reference: data.reference, createdBy: userId })
       .returning();
     await audit(tx, ctx, "payment.recorded", "payment", row!.id, { invoiceId, amountMinor });
     return row!;

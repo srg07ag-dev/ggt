@@ -82,7 +82,7 @@ export function MetaForm({ companyId, docId, issueDate, dueDate, notes }: { comp
 }
 
 
-export function PaymentForm({ companyId, invoiceId, today, currency, outstanding }: { companyId: string; invoiceId: string; today: string; currency: string; outstanding: string }) {
+export function PaymentForm({ companyId, invoiceId, today, currency, outstanding, accounts }: { companyId: string; invoiceId: string; today: string; currency: string; outstanding: string; accounts: Opt[] }) {
   const [state, action, pending] = useActionState(paymentAction.bind(null, companyId, invoiceId), undefined);
   const ref = useResetOnSuccess(state);
   return (
@@ -93,6 +93,11 @@ export function PaymentForm({ companyId, invoiceId, today, currency, outstanding
         {Object.entries(METHOD_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </Select>
       <Field id="reference" name="reference" label="Référence" />
+      {accounts.length > 0 && (
+        <Select id="accountId" name="accountId" label="Encaissé sur le compte" defaultValue={accounts[0]!.id}>
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </Select>
+      )}
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" loading={pending}>Enregistrer le paiement</Button>
         {state?.error && <p role="alert" className="text-sm text-danger">{state.error}</p>}

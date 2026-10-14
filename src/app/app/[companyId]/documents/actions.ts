@@ -111,7 +111,7 @@ export async function deleteDraftAction(companyId: string, docId: string, back: 
 export async function paymentAction(companyId: string, invoiceId: string, _: ActionState, f: FormData): Promise<ActionState> {
   const user = await requireUser();
   const res = await runAction(async () => {
-    await recordPayment(user.id, companyId, invoiceId, { amount: s(f, "amount"), paidOn: s(f, "paidOn"), method: s(f, "method"), reference: s(f, "reference") });
+    await recordPayment(user.id, companyId, invoiceId, { amount: s(f, "amount"), paidOn: s(f, "paidOn"), method: s(f, "method"), reference: s(f, "reference"), accountId: s(f, "accountId") || undefined });
   });
   if (res?.ok) refresh(companyId);
   return res;

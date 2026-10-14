@@ -56,6 +56,14 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   await expect(page.getByRole("region", { name: "Gagné" }).getByRole("article")).toContainText("Refonte site");
   await page.screenshot({ path: `e2e/shot-pipeline-${info.project.name}.png` });
 
+  // Finances : compte de trésorerie (avant la facture, pour y affecter le paiement)
+  await page.goto(dashUrl + "/treasury");
+  await page.getByText("+ Nouveau compte").click();
+  await page.getByLabel("Nom du compte").fill("Banque principale");
+  await page.getByLabel(/Solde actuel/).fill("5000");
+  await page.getByRole("button", { name: "Ajouter le compte" }).click();
+  await expect(page.getByText("Banque principale")).toBeVisible();
+
   // Ventes : configuration, catalogue, facture, paiement partiel, PDF, avoir
   await page.goto(dashUrl + "/settings");
   await page.getByLabel("Factures", { exact: true }).fill("FA-{YYYY}-{NNNN}");
@@ -95,6 +103,38 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   await page.goto(dashUrl);
   await expect(page.getByText("Créances clients")).toBeVisible();
 
+  // Dépense avec justificatif, téléchargement protégé, rapport et export
+  await page.goto(dashUrl + "/expenses");
+  await page.getByText("+ Nouvelle dépense").click();
+  await page.getByLabel("Description").fill("Loyer octobre");
+  await page.getByLabel(/^Montant TTC/).fill("300");
+  await page.getByLabel("Dont taxe").fill("30");
+  await page.getByLabel("Justificatif (PDF").setInputFiles({ name: "quittance.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%e2e\n") });
+  await page.getByRole("button", { name: "Enregistrer la dépense" }).click();
+  await page.waitForURL(/\/entries\//);
+  await expect(page.getByRole("link", { name: "quittance.pdf" })).toBeVisible();
+  const entryUrl = page.url();
+  const att = await page.request.get(await page.getByRole("link", { name: "quittance.pdf" }).evaluate((a) => (a as HTMLAnchorElement).href));
+  expect(att.status()).toBe(200);
+  expect(att.headers()["content-type"]).toBe("application/pdf");
+  expect(att.headers()["x-content-type-options"]).toBe("nosniff");
+  expect(att.headers()["content-disposition"]).toContain("attachment");
+  const attUrl = await page.getByRole("link", { name: "quittance.pdf" }).evaluate((a) => (a as HTMLAnchorElement).href);
+  // un faux PDF est refusé
+  await page.getByLabel("Ajouter un justificatif").setInputFiles({ name: "faux.pdf", mimeType: "application/pdf", buffer: Buffer.from("MZ pas un pdf") });
+  await page.getByRole("button", { name: "Téléverser" }).click();
+  await expect(page.getByText("Format non pris en charge")).toBeVisible();
+  // trésorerie : 5000 + 400 encaissés − 300 dépensés = 5 100
+  await page.goto(dashUrl + "/treasury");
+  await expect(page.getByText("5 100").first()).toBeVisible();
+  await page.goto(dashUrl + "/reports");
+  await expect(page.getByText("Résultat de gestion (indicatif)")).toBeVisible();
+  await page.screenshot({ path: `e2e/shot-reports-${info.project.name}.png`, fullPage: true });
+  const csv = await page.request.get(dashUrl + "/exports/expenses");
+  expect(csv.status()).toBe(200);
+  expect(csv.headers()["content-type"]).toContain("text/csv");
+  expect(await csv.text()).toContain("Loyer octobre");
+
   // Archivage
   await page.goto(dashUrl + "/contacts");
   await page.getByRole("link", { name: "Client Un" }).click();
@@ -117,4 +157,8 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   expect((await p2.goto(dashUrl + "/pipeline"))?.status()).toBe(404);
   expect((await p2.goto(docUrl))?.status()).toBe(404);
   expect((await p2.request.get(docUrl + "/pdf")).status()).toBe(404);
+  expect((await p2.goto(entryUrl))?.status()).toBe(404);
+  expect((await p2.request.get(attUrl)).status()).toBe(404);
+  expect((await p2.request.get(dashUrl + "/exports/expenses")).status()).toBe(404);
+
 });
