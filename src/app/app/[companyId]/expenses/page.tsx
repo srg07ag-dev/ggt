@@ -11,10 +11,11 @@ import { can } from "@/modules/core/permissions";
 import { requireMembership } from "@/modules/core/tenant";
 import { listAccounts, listCategories, listEntries, listSuppliers } from "@/modules/finance/finance";
 import { CategoryForm, EntryForm } from "../finance-forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Dépenses" };
 
-export default async function Expenses({ params }: { params: Promise<{ companyId: string }> }) {
+async function Expenses({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId, "finance:read");
@@ -55,3 +56,5 @@ export default async function Expenses({ params }: { params: Promise<{ companyId
     </div>
   );
 }
+
+export default withAccess(Expenses);

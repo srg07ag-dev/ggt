@@ -5,10 +5,11 @@ import { requireMembership } from "@/modules/core/tenant";
 import { listContactOptions } from "@/modules/crm/contacts";
 import { listDocuments } from "@/modules/sales/documents";
 import { NewDraftForm } from "../documents/forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Devis" };
 
-export default async function Quotes({ params }: { params: Promise<{ companyId: string }> }) {
+async function Quotes({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId, "sales:read");
@@ -26,3 +27,5 @@ export default async function Quotes({ params }: { params: Promise<{ companyId: 
     </div>
   );
 }
+
+export default withAccess(Quotes);

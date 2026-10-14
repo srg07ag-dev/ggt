@@ -13,8 +13,9 @@ import { requireMembership, withTenant } from "@/modules/core/tenant";
 import { listAttachments } from "@/modules/finance/finance";
 import { deleteAttachmentAction, voidEntryAction } from "../../finance-actions";
 import { UploadForm } from "../../finance-forms";
+import { withAccess } from "@/lib/with-access";
 
-export default async function EntryPage({ params }: { params: Promise<{ companyId: string; entryId: string }> }) {
+async function EntryPage({ params }: { params: Promise<{ companyId: string; entryId: string }> }) {
   const { companyId, entryId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(entryId)) notFound();
   const user = await requireUser();
@@ -96,3 +97,5 @@ export default async function EntryPage({ params }: { params: Promise<{ companyI
     </div>
   );
 }
+
+export default withAccess(EntryPage);

@@ -13,10 +13,11 @@ import { db, schema } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { moveOpportunityAction } from "./actions";
 import { OpportunityForm } from "./opportunity-form";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Pipeline" };
 
-export default async function Pipeline({
+async function Pipeline({
   params,
   searchParams,
 }: {
@@ -121,3 +122,5 @@ export default async function Pipeline({
     </div>
   );
 }
+
+export default withAccess(Pipeline);

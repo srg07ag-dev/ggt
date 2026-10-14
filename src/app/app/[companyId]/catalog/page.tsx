@@ -11,10 +11,11 @@ import { formatRate } from "@/modules/sales/calc";
 import { listProducts, listTaxRates } from "@/modules/sales/catalog";
 import { archiveProductAction, archiveTaxRateAction } from "./actions";
 import { ProductForm, TaxRateForm } from "./forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Catalogue" };
 
-export default async function Catalog({ params }: { params: Promise<{ companyId: string }> }) {
+async function Catalog({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId, "sales:read");
@@ -76,3 +77,5 @@ export default async function Catalog({ params }: { params: Promise<{ companyId:
     </div>
   );
 }
+
+export default withAccess(Catalog);

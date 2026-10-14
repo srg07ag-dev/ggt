@@ -5,7 +5,9 @@ import path from "node:path";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-const root = () => path.resolve(process.env.STORAGE_DIR || ".storage");
+const root = () => path.resolve(/*turbopackIgnore: true*/ process.env.STORAGE_DIR || ".storage");
+/** Chemin complet d'une clé déjà validée (UUID/UUID) : jamais de saisie utilisateur dans le chemin. */
+const full = (key: string) => path.join(/*turbopackIgnore: true*/ root(), key);
 const KEY_RE = /^[0-9a-f-]{36}\/[0-9a-f-]{36}$/;
 
 export class UploadError extends Error {
@@ -37,18 +39,18 @@ export async function putPrivateFile(companyId: string, data: Buffer) {
   const kind = sniffContentType(data);
   if (!kind) throw new UploadError("Format non pris en charge (PDF, PNG, JPEG ou WebP).");
   const key = `${companyId}/${randomUUID()}`;
-  const full = path.join(root(), key);
-  await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, data, { flag: "wx", mode: 0o600 });
+  const target = full(key);
+  await mkdir(/*turbopackIgnore: true*/ path.dirname(target), { recursive: true });
+  await writeFile(/*turbopackIgnore: true*/ target, data, { flag: "wx", mode: 0o600 });
   return { key, ...kind, sizeBytes: data.length, sha256: createHash("sha256").update(data).digest("hex") };
 }
 
 export async function getPrivateFile(key: string): Promise<Buffer> {
   if (!KEY_RE.test(key)) throw new Error("Clé de stockage invalide");
-  return readFile(path.join(root(), key));
+  return readFile(/*turbopackIgnore: true*/ full(key));
 }
 
 export async function deletePrivateFile(key: string) {
   if (!KEY_RE.test(key)) return;
-  await rm(path.join(root(), key), { force: true });
+  await rm(/*turbopackIgnore: true*/ full(key), { force: true });
 }

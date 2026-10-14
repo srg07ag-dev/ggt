@@ -12,10 +12,11 @@ import { can } from "@/modules/core/permissions";
 import { requireMembership } from "@/modules/core/tenant";
 import { listAccounts } from "@/modules/finance/finance";
 import { requireUser } from "@/lib/session";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Vue d'ensemble" };
 
-export default async function Dashboard({ params }: { params: Promise<{ companyId: string }> }) {
+async function Dashboard({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId);
@@ -92,3 +93,5 @@ export default async function Dashboard({ params }: { params: Promise<{ companyI
     </div>
   );
 }
+
+export default withAccess(Dashboard);

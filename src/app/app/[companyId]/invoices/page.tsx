@@ -6,10 +6,11 @@ import { requireMembership } from "@/modules/core/tenant";
 import { listContactOptions } from "@/modules/crm/contacts";
 import { listDocuments } from "@/modules/sales/documents";
 import { NewDraftForm } from "../documents/forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Factures" };
 
-export default async function Invoices({ params, searchParams }: { params: Promise<{ companyId: string }>; searchParams: Promise<{ tab?: string }> }) {
+async function Invoices({ params, searchParams }: { params: Promise<{ companyId: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { companyId } = await params;
   const { tab } = await searchParams;
   const user = await requireUser();
@@ -31,3 +32,5 @@ export default async function Invoices({ params, searchParams }: { params: Promi
     </div>
   );
 }
+
+export default withAccess(Invoices);

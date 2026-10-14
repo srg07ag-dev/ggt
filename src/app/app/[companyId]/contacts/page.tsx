@@ -4,12 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PillTabs } from "@/components/ui/pill-tabs";
 import { requireUser } from "@/lib/session";
+import { can } from "@/modules/core/permissions";
+import { requireMembership } from "@/modules/core/tenant";
 import { countContactsByState, listContactOptions, listContacts } from "@/modules/crm/contacts";
 import { ContactForm } from "./contact-form";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Contacts" };
 
-export default async function Contacts({
+async function Contacts({
   params,
   searchParams,
 }: {
@@ -19,6 +22,7 @@ export default async function Contacts({
   const { companyId } = await params;
   const sp = await searchParams;
   const user = await requireUser();
+  const canWrite = can((await requireMembership(user.id, companyId, "crm:read")).role, "crm:write");
   const archived = sp.archived === "1";
   const kind = sp.kind === "person" || sp.kind === "organization" ? sp.kind : undefined;
   const [contacts, counts, parents] = await Promise.all([
@@ -37,10 +41,10 @@ export default async function Contacts({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Contacts</h1>
-      <details className="group rounded-[var(--radius-lg)] border border-border bg-surface">
+      {canWrite && <details className="group rounded-[var(--radius-lg)] border border-border bg-surface">
         <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouveau contact</summary>
         <div className="border-t border-border p-5"><ContactForm companyId={companyId} parents={parents} /></div>
-      </details>
+      </details>}
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <PillTabs
@@ -109,3 +113,5 @@ export default async function Contacts({
     </div>
   );
 }
+
+export default withAccess(Contacts);

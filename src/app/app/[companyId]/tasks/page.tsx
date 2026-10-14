@@ -8,10 +8,11 @@ import { listActivities } from "@/modules/crm/activities";
 import { listContactOptions } from "@/modules/crm/contacts";
 import { ActivityForm } from "./activity-form";
 import { ActivityList } from "./activity-list";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Tâches" };
 
-export default async function Tasks({
+async function Tasks({
   params,
   searchParams,
 }: {
@@ -53,3 +54,5 @@ export default async function Tasks({
     </div>
   );
 }
+
+export default withAccess(Tasks);

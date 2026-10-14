@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/session";
 import { getCompanyProfile } from "@/modules/core/settings";
 import { financialReport, parsePeriod } from "@/modules/finance/reports";
 import { salesSummary } from "@/modules/sales/documents";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Rapports" };
 
@@ -31,7 +32,7 @@ function Row({ label, value, strong, muted }: { label: string; value: string; st
   );
 }
 
-export default async function Reports({ params, searchParams }: { params: Promise<{ companyId: string }>; searchParams: Promise<{ from?: string; to?: string }> }) {
+async function Reports({ params, searchParams }: { params: Promise<{ companyId: string }>; searchParams: Promise<{ from?: string; to?: string }> }) {
   const { companyId } = await params;
   const sp = await searchParams;
   const user = await requireUser();
@@ -121,3 +122,5 @@ export default async function Reports({ params, searchParams }: { params: Promis
     </div>
   );
 }
+
+export default withAccess(Reports);

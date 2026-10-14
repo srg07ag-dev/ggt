@@ -16,8 +16,9 @@ import { ActivityForm } from "../../tasks/activity-form";
 import { ActivityList } from "../../tasks/activity-list";
 import { archiveContactAction } from "../actions";
 import { ContactForm } from "../contact-form";
+import { withAccess } from "@/lib/with-access";
 
-export default async function ContactPage({ params }: { params: Promise<{ companyId: string; contactId: string }> }) {
+async function ContactPage({ params }: { params: Promise<{ companyId: string; contactId: string }> }) {
   const { companyId, contactId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(contactId)) notFound();
   const user = await requireUser();
@@ -125,3 +126,5 @@ export default async function ContactPage({ params }: { params: Promise<{ compan
     </div>
   );
 }
+
+export default withAccess(ContactPage);

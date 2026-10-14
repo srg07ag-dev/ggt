@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+export function AuthForm({ mode, next = "/app", defaultEmail }: { mode: "login" | "signup"; next?: string; defaultEmail?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -25,14 +25,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         : await authClient.signIn.email({ email, password });
     setLoading(false);
     if (res.error) return setError(res.error.message ?? "Une erreur est survenue.");
-    router.push("/app");
+    router.push(next);
     router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {mode === "signup" && <Field id="name" name="name" label="Nom complet" required autoComplete="name" />}
-      <Field id="email" name="email" type="email" label="E-mail" required autoComplete="email" />
+      <Field id="email" name="email" type="email" label="E-mail" required autoComplete="email" defaultValue={defaultEmail} />
       <Field
         id="password"
         name="password"
@@ -53,9 +53,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </Button>
       <p className="text-center text-sm text-muted">
         {mode === "signup" ? (
-          <>Déjà inscrit ? <Link className="text-accent" href="/login">Se connecter</Link></>
+          <>Déjà inscrit ? <Link className="text-accent" href={next === "/app" ? "/login" : `/login?next=${encodeURIComponent(next)}`}>Se connecter</Link></>
         ) : (
-          <>Pas encore de compte ? <Link className="text-accent" href="/signup">Créer un compte</Link></>
+          <>Pas encore de compte ? <Link className="text-accent" href={next === "/app" ? "/signup" : `/signup?next=${encodeURIComponent(next)}`}>Créer un compte</Link></>
         )}
       </p>
     </form>

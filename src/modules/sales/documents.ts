@@ -3,16 +3,12 @@ import { z } from "zod";
 import { schema } from "@/db/client";
 import { addDays, todayIn } from "@/lib/dates";
 import { toMinor } from "@/lib/money";
+import { BusinessRuleError } from "@/modules/core/errors";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "@/modules/core/tenant";
 import { computeLine, computeTotals, parseQuantity } from "./calc";
 import { nextNumber, type DocType } from "./numbering";
 
-export class BusinessRuleError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "BusinessRuleError";
-  }
-}
+export { BusinessRuleError };
 const rule = (m: string) => new BusinessRuleError(m);
 const fail = (path: string, message: string) => new z.ZodError([{ code: "custom", path: [path], message }]);
 

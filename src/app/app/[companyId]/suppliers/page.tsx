@@ -7,10 +7,11 @@ import { requireMembership } from "@/modules/core/tenant";
 import { listSuppliers } from "@/modules/finance/finance";
 import { archiveSupplierAction } from "../finance-actions";
 import { SupplierForm } from "../finance-forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Fournisseurs" };
 
-export default async function Suppliers({ params }: { params: Promise<{ companyId: string }> }) {
+async function Suppliers({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId, "finance:read");
@@ -35,3 +36,5 @@ export default async function Suppliers({ params }: { params: Promise<{ companyI
     </div>
   );
 }
+
+export default withAccess(Suppliers);

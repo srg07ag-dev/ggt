@@ -509,3 +509,26 @@ export const attachment = pgTable(
     foreignKey({ columns: [t.companyId, t.entryId], foreignColumns: [financeEntry.companyId, financeEntry.id] }),
   ],
 );
+
+/* ---------- Invitations ---------- */
+
+/** Le jeton n'est jamais stocké : seule son empreinte SHA-256 l'est. Usage unique, expiration, révocable. */
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    /** Toujours en minuscules. */
+    email: text("email").notNull(),
+    role: roleEnum("role").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    invitedBy: text("invited_by").references(() => user.id, { onDelete: "set null" }),
+    expiresAt: timestamp("expires_at").notNull(),
+    acceptedAt: timestamp("accepted_at"),
+    revokedAt: timestamp("revoked_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("invitation_company_idx").on(t.companyId)],
+);

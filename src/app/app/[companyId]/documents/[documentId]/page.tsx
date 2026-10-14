@@ -25,10 +25,11 @@ import {
 import { AddLineForm, MetaForm, PaymentForm } from "../forms";
 import { METHOD_LABELS } from "../labels";
 import { DocStatusBadge } from "../status";
+import { withAccess } from "@/lib/with-access";
 
 const TITLES = { quote: "Devis", invoice: "Facture", credit_note: "Avoir" } as const;
 
-export default async function DocumentPage({ params }: { params: Promise<{ companyId: string; documentId: string }> }) {
+async function DocumentPage({ params }: { params: Promise<{ companyId: string; documentId: string }> }) {
   const { companyId, documentId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(documentId)) notFound();
   const user = await requireUser();
@@ -207,3 +208,5 @@ export default async function DocumentPage({ params }: { params: Promise<{ compa
     </div>
   );
 }
+
+export default withAccess(DocumentPage);

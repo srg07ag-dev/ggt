@@ -10,12 +10,13 @@ import { requireMembership } from "@/modules/core/tenant";
 import { listAccounts } from "@/modules/finance/finance";
 import { archiveAccountAction } from "../finance-actions";
 import { AccountForm } from "../finance-forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Trésorerie" };
 
 const KINDS: Record<string, string> = { bank: "Banque", cash: "Caisse", mobile_money: "Mobile money", other: "Autre" };
 
-export default async function Treasury({ params }: { params: Promise<{ companyId: string }> }) {
+async function Treasury({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId, "finance:read");
@@ -54,3 +55,5 @@ export default async function Treasury({ params }: { params: Promise<{ companyId
     </div>
   );
 }
+
+export default withAccess(Treasury);

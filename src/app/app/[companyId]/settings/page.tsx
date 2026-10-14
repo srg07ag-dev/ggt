@@ -5,10 +5,11 @@ import { getCompanyProfile, getNumbering } from "@/modules/core/settings";
 import { requireMembership } from "@/modules/core/tenant";
 import { SUGGESTED_PATTERNS } from "@/modules/sales/numbering";
 import { NumberingForm, ProfileForm } from "./forms";
+import { withAccess } from "@/lib/with-access";
 
 export const metadata = { title: "Paramètres" };
 
-export default async function Settings({ params }: { params: Promise<{ companyId: string }> }) {
+async function Settings({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId, "sales:read");
@@ -32,3 +33,5 @@ export default async function Settings({ params }: { params: Promise<{ companyId
     </div>
   );
 }
+
+export default withAccess(Settings);
