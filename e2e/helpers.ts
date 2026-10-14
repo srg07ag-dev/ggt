@@ -57,3 +57,18 @@ export function totp(secret: string, at = Date.now()): string {
   const n = ((h[o]! & 0x7f) << 24) | (h[o + 1]! << 16) | (h[o + 2]! << 8) | h[o + 3]!;
   return String(n % 1_000_000).padStart(6, "0");
 }
+
+/** Active la double authentification depuis la page Sécurité ; retourne le secret TOTP pour générer les codes suivants. */
+export async function enableTwoFactor(page: Page, password: string): Promise<string> {
+  await page.goto("/account/security");
+  await page.getByLabel("Mot de passe (confirmation)").fill(password);
+  await page.getByRole("button", { name: "Activer" }).click();
+  await expect(page.getByAltText("QR code d'activation")).toBeVisible();
+  await page.getByText("Saisie manuelle").click();
+  const uri = await page.locator("details code").innerText();
+  const secret = new URL(uri).searchParams.get("secret")!;
+  await page.getByLabel("Code", { exact: true }).fill(totp(secret));
+  await page.getByRole("button", { name: "Confirmer" }).click();
+  await expect(page.getByText("Activée", { exact: true })).toBeVisible();
+  return secret;
+}

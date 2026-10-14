@@ -3,6 +3,7 @@ import { and, asc, eq, gt, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db/client";
 import { rateLimit } from "@/lib/rate-limit";
+import { assertCanAddMember } from "./entitlements";
 import { BusinessRuleError } from "./errors";
 import { canAssignRole, canManageMember, INVITABLE_ROLES, ROLES, type Role } from "./permissions";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "./tenant";
@@ -43,6 +44,7 @@ export async function createInvitation(userId: string, companyId: string, input:
     .parse(input);
   const ctx = await requireMembership(userId, companyId, "members:manage");
   await rateLimit(`invite:${companyId}`, 30, 3600);
+  await assertCanAddMember(companyId, { email: data.email }); // limite de membres de l'offre
   if (!INVITABLE_ROLES.includes(data.role) || !canAssignRole(ctx.role, data.role)) throw new ForbiddenError("Vous ne pouvez pas attribuer ce rôle.");
 
   return withTenant(ctx, async (tx) => {
@@ -117,6 +119,7 @@ export async function acceptInvitation(userId: string, userEmail: string, token:
       .where(and(eq(schema.invitation.tokenHash, hashToken(token)), isNull(schema.invitation.acceptedAt), isNull(schema.invitation.revokedAt), gt(schema.invitation.expiresAt, new Date())))
       .returning();
     if (!inv) throw rule(INVALID_MESSAGES.used);
+    await assertCanAddMember(inv.companyId, { counting: "accept" }); // annule aussi la consommation de l'invitation
     await tx.insert(schema.membership).values({ companyId: inv.companyId, userId, role: inv.role }).onConflictDoNothing();
     await tx.execute(sql`select set_config('app.company_id', ${inv.companyId}, true)`);
     await tx.insert(schema.auditLog).values({ companyId: inv.companyId, actorId: userId, action: "invitation.accepted", entity: "invitation", entityId: inv.id, meta: { role: inv.role } });

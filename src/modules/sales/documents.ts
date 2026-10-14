@@ -6,6 +6,7 @@ import { toMinor } from "@/lib/money";
 import { BusinessRuleError } from "@/modules/core/errors";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "@/modules/core/tenant";
 import { computeLine, computeTotals, parseQuantity } from "./calc";
+import { assertCanIssueInvoice } from "@/modules/core/entitlements";
 import { postIssuedDocument, postPayment, reversePayment } from "@/modules/accounting/posting";
 import { nextNumber, type DocType } from "./numbering";
 
@@ -268,6 +269,7 @@ async function finalize(tx: TenantTx, ctx: TenantContext, doc: Doc, status: "sen
     .where(eq(schema.salesLine.documentId, doc.id));
   if (n === 0) throw rule("Ajoutez au moins une ligne avant de continuer.");
   if (doc.totalMinor <= 0) throw rule("Le total doit être supérieur à zéro.");
+  if (doc.type === "invoice" && status === "issued") await assertCanIssueInvoice(tx, ctx.companyId, doc.issueDate);
   const number = await nextNumber(tx, ctx.companyId, doc.type, doc.issueDate);
   const snapshot = await buildSnapshot(tx, doc);
   await tx

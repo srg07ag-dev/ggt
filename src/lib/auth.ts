@@ -36,6 +36,10 @@ export const auth = betterAuth({
       void sendMail(mails.verify(user.email, url)).catch((e) => console.error("Échec d'envoi (vérification)", e instanceof Error ? e.message : e));
     },
   },
+  user: {
+    // exposé dans la session pour l'accès à l'administration ; jamais modifiable par l'utilisateur (input: false + déclencheur en base)
+    additionalFields: { isPlatformAdmin: { type: "boolean", defaultValue: false, input: false } },
+  },
   session: { expiresIn: 60 * 60 * 24 * 14, updateAge: 60 * 60 * 24, cookieCache: { enabled: false } },
   rateLimit: {
     enabled: true,

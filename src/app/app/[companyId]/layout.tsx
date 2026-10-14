@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BarChart3, BookOpen, Calculator, FileSpreadsheet, Landmark as Bank, Scale, ScrollText, Settings2, CalendarClock, Layers, UserCog, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Settings, Truck, Users } from "lucide-react";
+import { CreditCard, BarChart3, BookOpen, Calculator, FileSpreadsheet, Landmark as Bank, Scale, ScrollText, Settings2, CalendarClock, Layers, UserCog, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Settings, Truck, Users } from "lucide-react";
 import { can, ROLE_LABELS } from "@/modules/core/permissions";
+import { loadAccess, type Module } from "@/modules/core/entitlements";
 import { SignOutButton } from "@/components/sign-out";
 import { requireUser } from "@/lib/session";
 import { listCompaniesForUser } from "@/modules/core/companies";
@@ -23,13 +24,14 @@ export default async function CompanyLayout({
     if (e instanceof ForbiddenError) notFound();
     throw e;
   }
-  const companies = await listCompaniesForUser(user.id);
+  const [companies, access] = await Promise.all([listCompaniesForUser(user.id), loadAccess(companyId)]);
+  const has = (m: Module) => access.state === "unmanaged" || access.modules.includes(m);
   const current = companies.find((c) => c.id === companyId);
 
   const b = `/app/${companyId}`;
-  const finance = can(membership.role, "finance:read");
-  const accounting = can(membership.role, "accounting:read");
-  const taxes = can(membership.role, "tax:read");
+  const finance = can(membership.role, "finance:read") && has("finance");
+  const accounting = can(membership.role, "accounting:read") && has("accounting");
+  const taxes = can(membership.role, "tax:read") && has("tax");
   const groups: { title?: string; items: { href: string; label: string; icon: typeof Users }[] }[] = [
     { items: [{ href: b, label: "Vue d'ensemble", icon: LayoutDashboard }] },
     {
@@ -79,7 +81,7 @@ export default async function CompanyLayout({
         ]
       : []),
     ...(taxes ? [{ title: "Fiscalité", items: [{ href: `${b}/tax`, label: "Obligations et suivi", icon: Bank }] }] : []),
-    { title: "Organisation", items: [{ href: `${b}/members`, label: "Membres", icon: UserCog }, ...(can(membership.role, "audit:read") ? [{ href: `${b}/audit`, label: "Journal d'audit", icon: ScrollText }] : []), { href: `${b}/settings`, label: "Paramètres", icon: Settings }] },
+    { title: "Organisation", items: [...(can(membership.role, "company:manage") ? [{ href: `${b}/billing`, label: "Abonnement", icon: CreditCard }] : []), { href: `${b}/members`, label: "Membres", icon: UserCog }, ...(can(membership.role, "audit:read") ? [{ href: `${b}/audit`, label: "Journal d'audit", icon: ScrollText }] : []), { href: `${b}/settings`, label: "Paramètres", icon: Settings }] },
   ];
 
   return (
@@ -125,6 +127,16 @@ export default async function CompanyLayout({
           <span className="text-sm text-muted">{current?.name}</span>
           <span className="flex items-center gap-4 text-sm"><span className="hidden sm:inline">{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span><span className="sm:hidden text-xs text-muted">{ROLE_LABELS[membership.role]}</span><Link href="/account/security" className="text-muted hover:text-text">Sécurité</Link><SignOutButton /></span>
         </header>
+        {(access.readOnly || access.warn) && (
+          <div role="status" className={`px-4 py-2.5 text-center text-sm md:px-8 ${access.readOnly ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"}`}>
+            {access.state === "suspended" && "Ce compte est suspendu : l'entreprise est en lecture seule."}
+            {access.state === "expired" && "Votre abonnement a expiré : l'entreprise est en lecture seule (données consultables et exportables)."}
+            {access.warn === "trial_ending" && "Votre période d'essai se termine bientôt."}
+            {access.warn === "grace" && "Paiement en retard : l'accès sera limité à la fin du délai de grâce."}
+            {access.warn === "canceling" && "Votre abonnement est résilié : il prendra fin à la fin de la période payée."}
+            {can(membership.role, "company:manage") && <> <Link href={`/app/${companyId}/billing`} className="font-medium underline">Gérer l&apos;abonnement</Link></>}
+          </div>
+        )}
         <main className="mx-auto max-w-5xl px-4 py-8 md:px-8">{children}</main>
       </div>
     </div>

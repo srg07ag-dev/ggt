@@ -1,3 +1,4 @@
+import { PlanRestrictionError } from "@/modules/core/entitlements";
 import { RateLimitError } from "@/lib/rate-limit";
 import { ForbiddenError } from "@/modules/core/tenant";
 import { getSession } from "@/lib/session";
@@ -25,6 +26,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ companyId:
     });
   } catch (e) {
     if (e instanceof ForbiddenError) return new Response("Introuvable", { status: 404 });
+    if (e instanceof PlanRestrictionError) return new Response(e.message, { status: 403 });
     if (e instanceof RateLimitError) return new Response(e.message, { status: 429, headers: { "retry-after": String(e.retryAfterSeconds) } });
     throw e;
   }

@@ -24,6 +24,8 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  /** Opérateur de la plateforme (administration). Jamais modifiable par l'utilisateur ; attribué par script d'exploitation. */
+  isPlatformAdmin: boolean("is_platform_admin").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -835,4 +837,128 @@ export const taxEvent = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [foreignKey({ columns: [t.companyId, t.obligationId], foreignColumns: [taxObligation.companyId, taxObligation.id] })],
+);
+
+/* ---------- Abonnements et administration de la plateforme ---------- */
+
+export const planIntervalEnum = pgEnum("plan_interval", ["month", "year"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["trialing", "active", "past_due", "expired"]);
+export const billingInvoiceStatusEnum = pgEnum("billing_invoice_status", ["open", "paid", "void"]);
+
+/**
+ * Offres commerciales (données de plateforme). Aucune n'est livrée : les prix et les limites sont décidés par l'opérateur.
+ * `limits` : { members, invoicesPerMonth, storageMb } — null ou absent = illimité. `modules` : crm, sales, finance, accounting, tax.
+ */
+export const plan = pgTable(
+  "plan",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull().unique(),
+    name: text("name").notNull(),
+    description: text("description"),
+    currency: text("currency").notNull(),
+    priceMinor: bigint("price_minor", { mode: "number" }).notNull().default(0),
+    interval: planIntervalEnum("interval").notNull().default("month"),
+    trialDays: integer("trial_days").notNull().default(0),
+    limits: jsonb("limits").notNull().default({}),
+    modules: text("modules").array().notNull().default([]),
+    isPublic: boolean("is_public").notNull().default(true),
+    /** Attribuée automatiquement aux nouvelles entreprises (une seule). */
+    isDefault: boolean("is_default").notNull().default(false),
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+);
+
+/**
+ * Abonnement d'une entreprise. `planId` est l'offre facturée aux prochains renouvellements. L'accès, lui, se déduit de la période d'essai
+ * ou de la facture payée qui couvre la date du jour : il ne dépend d'aucune tâche planifiée. `status` n'est qu'un cache pour l'administration.
+ */
+export const subscription = pgTable("subscription", {
+  companyId: uuid("company_id")
+    .primaryKey()
+    .references(() => company.id, { onDelete: "cascade" }),
+  planId: uuid("plan_id")
+    .notNull()
+    .references(() => plan.id),
+  /** Dernier statut matérialisé ; le statut effectif se calcule (voir core/entitlements). */
+  status: subscriptionStatusEnum("status").notNull(),
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspendedReason: text("suspended_reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Factures émises par la plateforme à ses clients (abonnements). Montants figés à l'émission. */
+export const billingInvoice = pgTable(
+  "billing_invoice",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plan.id),
+    number: text("number").notNull().unique(),
+    periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+    periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+    amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+    currency: text("currency").notNull(),
+    status: billingInvoiceStatusEnum("status").notNull().default("open"),
+    issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paymentMethod: text("payment_method"),
+    paymentReference: text("payment_reference"),
+    provider: text("provider"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("billing_invoice_company_idx").on(t.companyId, t.issuedAt)],
+);
+
+/** Idempotence des webhooks : un événement de prestataire n'est traité qu'une fois. */
+export const billingEvent = pgTable(
+  "billing_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    eventId: text("event_id").notNull(),
+    receivedAt: timestamp("received_at").notNull().defaultNow(),
+    payload: jsonb("payload").notNull(),
+  },
+  (t) => [unique("billing_event_unique").on(t.provider, t.eventId)],
+);
+
+export const platformCounter = pgTable("platform_counter", {
+  key: text("key").primaryKey(),
+  last: integer("last").notNull().default(0),
+});
+
+/** Réglages uniques de la plateforme (ligne id = 1). */
+export const platformSettings = pgTable("platform_settings", {
+  id: integer("id").primaryKey().default(1),
+  billingEnabled: boolean("billing_enabled").notNull().default(false),
+  paymentInstructions: text("payment_instructions"),
+  graceDays: integer("grace_days").notNull().default(7),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Journal d'audit de la plateforme (actions des opérateurs), en ajout seul. */
+export const platformAuditLog = pgTable(
+  "platform_audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id"),
+    meta: jsonb("meta"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("platform_audit_idx").on(t.createdAt)],
 );

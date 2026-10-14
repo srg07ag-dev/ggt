@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db/client";
+import { startDefaultSubscription } from "@/modules/billing/subscriptions";
 import { seedDefaultJournals } from "@/modules/accounting/journals";
 import { seedDefaultCategories } from "@/modules/finance/finance";
 import { seedDefaultStages } from "@/modules/crm/pipeline";
@@ -22,6 +23,7 @@ export async function createCompany(userId: string, input: CreateCompanyInput) {
     const rows = await tx.insert(schema.company).values(data).returning();
     const c = rows[0]!;
     await tx.insert(schema.membership).values({ companyId: c.id, userId, role: "owner" });
+    await startDefaultSubscription(tx, c.id); // offre par défaut si la facturation est active
     return rows;
   });
   const company = created!;

@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte, isNull, lte, sql, type SQL } from "drizzle-orm
 import { z } from "zod";
 import { schema } from "@/db/client";
 import { toMinor } from "@/lib/money";
+import { assertStorage } from "@/modules/core/entitlements";
 import { rateLimit } from "@/lib/rate-limit";
 import { postFinanceEntry, reverseFinanceEntry } from "@/modules/accounting/posting";
 import { deletePrivateFile, getPrivateFile, putPrivateFile, safeFilename } from "@/lib/storage";
@@ -262,6 +263,7 @@ export async function addAttachment(userId: string, companyId: string, entryId: 
     return await withTenant(ctx, async (tx) => {
       const [entry] = await tx.select({ id: schema.financeEntry.id }).from(schema.financeEntry).where(eq(schema.financeEntry.id, entryId));
       if (!entry) throw new ForbiddenError();
+      await assertStorage(tx, companyId, stored.sizeBytes);
       const [row] = await tx
         .insert(schema.attachment)
         .values({ companyId, entryId, filename: safeFilename(file.name, stored.ext), contentType: stored.type, sizeBytes: stored.sizeBytes, sha256: stored.sha256, storageKey: stored.key, uploadedBy: userId })

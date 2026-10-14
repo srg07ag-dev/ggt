@@ -73,6 +73,18 @@ BACKUP_DATABASE_URL=postgres://ggt_backup:…@hôte/ggt  BACKUP_DIR=/var/backups
   et refuse d'écraser une base non vide sans `--force`).
 - Objectifs à décider avec vous : perte de données maximale acceptable (RPO) et durée de remise en service (RTO).
 
+### Abonnements et administration de la plateforme
+
+- **Aucune offre ni aucun prix n'est préinstallé.** L'opérateur crée ses offres dans `/admin/plans` (modules, limites, prix, essai), désigne une offre **par défaut**, puis active la facturation dans `/admin/settings`.
+  Les entreprises **déjà existantes** sans abonnement gardent l'accès complet ; les nouvelles reçoivent l'offre par défaut.
+- **Premier opérateur** : `npx tsx scripts/make-admin.ts personne@exemple.com` (seul moyen : un déclencheur refuse toute autre modification). L'administration exige la **double authentification**.
+- **Tâche quotidienne** (cron) : `npx tsx scripts/billing-run.ts` émet les factures de renouvellement (5 jours avant l'échéance, une seule par période) et met à jour les statuts.
+  L'accès des entreprises ne dépend pas de cette tâche : il se déduit de l'essai ou de la période payée.
+- **Encaissement** : aujourd'hui, l'opérateur constate un virement ou un mobile money depuis la fiche entreprise (référence obligatoire, tracé). Pour un prestataire de paiement :
+  `POST /api/billing/webhook/<prestataire>` avec la variable `BILLING_WEBHOOK_SECRET_<PRESTATAIRE>` (signature `t=…,v1=HMAC-SHA256`, anti-rejeu 5 min, idempotent, montant et devise contrôlés). Adapter la vérification au schéma réel du prestataire choisi.
+- **Expiration** : lecture seule (les données restent consultables et exportables), jamais de blocage des données. Délai de grâce réglable après une échéance impayée.
+- **Vie privée** : l'administration ne voit que des métadonnées (entreprises, rôles, abonnements, factures d'abonnement), jamais les données métier d'une entreprise.
+
 ## 4. Proxy et adresse IP des clients
 
 La limitation de débit par IP lit `TRUSTED_IP_HEADER`. **N'exposez jamais l'application directement à Internet** : placez-la derrière un

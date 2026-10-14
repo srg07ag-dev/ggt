@@ -20,6 +20,9 @@
   dans la même transaction que l'opération (jamais de facture sans écriture), balance toujours équilibrée (test de propriété).
 - **Règles réglementaires** : aucune livrée ; une règle n'est appliquée qu'une fois validée (source citée, validateur, dates) et reste immuable ;
   sans règle validée, aucune estimation n'est produite.
+- **Abonnements** : accès déduit des dates (pas d'une tâche planifiée), factures d'abonnement figées et jamais supprimables, webhooks signés
+  (HMAC, anti-rejeu, idempotents), expiration en lecture seule, administration réservée aux opérateurs avec double authentification,
+  droit d'opérateur protégé par la base, aucune donnée métier visible des opérateurs, journal de plateforme en ajout seul.
 - **Journal d'audit** en ajout seul, consultable par les rôles autorisés.
 
 ## Limites connues (à décider avant l'ouverture publique)

@@ -67,7 +67,7 @@ test("vérification d'e-mail, mot de passe oublié, double authentification, lim
   const backup = (await page.locator("ul.grid li").allInnerTexts())[0]!.trim();
   await page.getByLabel("Code", { exact: true }).fill(totp(secret));
   await page.getByRole("button", { name: "Confirmer" }).click();
-  await expect(page.getByText("Activée")).toBeVisible();
+  await expect(page.getByText("Activée", { exact: true })).toBeVisible();
 
   const c2 = await browser.newContext(dev(2));
   const p3 = await c2.newPage();
