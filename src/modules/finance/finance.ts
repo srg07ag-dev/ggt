@@ -3,6 +3,7 @@ import { z } from "zod";
 import { schema } from "@/db/client";
 import { toMinor } from "@/lib/money";
 import { rateLimit } from "@/lib/rate-limit";
+import { postFinanceEntry, reverseFinanceEntry } from "@/modules/accounting/posting";
 import { deletePrivateFile, getPrivateFile, putPrivateFile, safeFilename } from "@/lib/storage";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "@/modules/core/tenant";
 import { BusinessRuleError } from "@/modules/sales/documents";
@@ -174,6 +175,7 @@ export async function createEntry(userId: string, companyId: string, input: Entr
 
     const [row] = await tx.insert(schema.financeEntry).values({ ...data, companyId, amountMinor, taxMinor, createdBy: userId }).returning();
     await audit(tx, ctx, `${data.kind}.recorded`, "finance_entry", row!.id, { amountMinor });
+    await postFinanceEntry(tx, ctx, { id: row!.id, kind: data.kind, amountMinor, taxMinor, occurredOn: data.occurredOn, accountId: data.accountId, categoryId: data.categoryId ?? null, description: data.description, supplierId: data.supplierId ?? null, contactId: data.contactId ?? null });
     return row!;
   });
 }
@@ -184,6 +186,7 @@ export async function voidEntry(userId: string, companyId: string, id: string) {
     const res = await tx.update(schema.financeEntry).set({ voidedAt: new Date() }).where(and(eq(schema.financeEntry.id, id), isNull(schema.financeEntry.voidedAt))).returning({ id: schema.financeEntry.id });
     if (!res.length) throw new BusinessRuleError("Opération introuvable ou déjà annulée.");
     await audit(tx, ctx, "entry.voided", "finance_entry", id);
+    await reverseFinanceEntry(tx, ctx, id);
   });
 }
 

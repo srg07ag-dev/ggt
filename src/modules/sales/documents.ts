@@ -6,6 +6,7 @@ import { toMinor } from "@/lib/money";
 import { BusinessRuleError } from "@/modules/core/errors";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "@/modules/core/tenant";
 import { computeLine, computeTotals, parseQuantity } from "./calc";
+import { postIssuedDocument, postPayment, reversePayment } from "@/modules/accounting/posting";
 import { nextNumber, type DocType } from "./numbering";
 
 export { BusinessRuleError };
@@ -200,6 +201,7 @@ export async function addLine(userId: string, companyId: string, docId: string, 
       quantityMilli,
       unitPriceMinor,
       taxName,
+      taxRateId: taxRateId ?? null,
       taxRateBp,
       ...amounts,
     });
@@ -273,6 +275,8 @@ async function finalize(tx: TenantTx, ctx: TenantContext, doc: Doc, status: "sen
     .set({ status, number, snapshot, issuedAt: new Date() })
     .where(eq(schema.salesDocument.id, doc.id));
   await audit(tx, ctx, `${doc.type}.${status}`, "sales_document", doc.id, { number });
+  // comptabilisation automatique dans la même transaction : pas de facture émise sans son écriture
+  if (status === "issued") await postIssuedDocument(tx, ctx, { id: doc.id, type: doc.type, number, issueDate: doc.issueDate, contactId: doc.contactId, totalMinor: doc.totalMinor });
   return number;
 }
 
@@ -412,6 +416,7 @@ export async function recordPayment(
       .values({ companyId, invoiceId, amountMinor, paidOn: data.paidOn, accountId: data.accountId, method: data.method, reference: data.reference, createdBy: userId })
       .returning();
     await audit(tx, ctx, "payment.recorded", "payment", row!.id, { invoiceId, amountMinor });
+    await postPayment(tx, ctx, { id: row!.id, invoiceId, amountMinor, paidOn: data.paidOn, accountId: data.accountId ?? null });
     return row!;
   });
 }
@@ -426,6 +431,7 @@ export async function voidPayment(userId: string, companyId: string, paymentId: 
       .returning({ id: schema.payment.id });
     if (!res.length) throw rule("Paiement introuvable ou déjà annulé.");
     await audit(tx, ctx, "payment.voided", "payment", paymentId);
+    await reversePayment(tx, ctx, paymentId);
   });
 }
 

@@ -15,6 +15,11 @@
 - **Exports CSV** : protégés contre l'injection de formules, tracés dans l'audit.
 - **En-têtes** : CSP avec nonce (pas de script en ligne), HSTS, `frame-ancestors 'none'`, Permissions-Policy, COOP.
 - **Configuration** validée au démarrage ; aucun secret côté client.
+- **Comptabilité** : écritures en partie double dont l'équilibre est vérifié **par la base** à la validation, immuables une fois validées
+  (correction par contre-passation), numérotation sans trou, périodes sans chevauchement et verrouillables, comptabilisation automatique
+  dans la même transaction que l'opération (jamais de facture sans écriture), balance toujours équilibrée (test de propriété).
+- **Règles réglementaires** : aucune livrée ; une règle n'est appliquée qu'une fois validée (source citée, validateur, dates) et reste immuable ;
+  sans règle validée, aucune estimation n'est produite.
 - **Journal d'audit** en ajout seul, consultable par les rôles autorisés.
 
 ## Limites connues (à décider avant l'ouverture publique)

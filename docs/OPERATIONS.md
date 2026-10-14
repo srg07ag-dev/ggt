@@ -39,6 +39,21 @@ GRANT pg_read_all_data TO ggt_backup;
 
 ⚠ `pg_dump` échoue avec le rôle applicatif (la RLS forcée l'empêche de lire) : c'est volontaire, utilisez `ggt_backup`.
 
+### Règles réglementaires (fiscalité, comptabilité) — données de plateforme
+
+La table `ruleset` n'appartient à aucune entreprise : elle contient les règles par pays (taux, obligations, référentiels). **Aucune règle n'est livrée.**
+Pour qu'une règle soit appliquée, un expert nommé doit la valider en citant sa source ; elle devient alors **immuable** (toute évolution = nouvelle version avec ses dates de validité, l'historique n'est jamais réécrit).
+
+```bash
+npx tsx scripts/ruleset.ts propose regle.json
+npx tsx scripts/ruleset.ts validate <id> --source "Texte officiel, article, date" --by "Nom de l'expert"
+npx tsx scripts/ruleset.ts retire <id> --to 2026-12-31
+npx tsx scripts/ruleset.ts list TG
+```
+
+À exécuter avec un rôle de plateforme. Le rôle applicatif ne doit avoir que le droit de lecture : `REVOKE INSERT, UPDATE, DELETE ON ruleset FROM ggt_app;`.
+Les entreprises définissent elles-mêmes leur plan de comptes (import CSV) : le produit n'en impose ni n'en suggère aucun.
+
 ## 3. Sauvegardes et restauration
 
 ```bash

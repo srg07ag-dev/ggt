@@ -53,6 +53,31 @@ export const ACTION_LABELS: Record<string, string> = {
   "member.role_changed": "Rôle modifié",
   "member.removed": "Membre retiré",
   "member.left": "Membre parti",
+  "ledger_account.created": "Compte comptable créé",
+  "ledger_account.renamed": "Compte comptable renommé",
+  "ledger_account.archived": "Compte comptable archivé",
+  "ledger_account.restored": "Compte comptable restauré",
+  "ledger_account.imported": "Plan de comptes importé",
+  "ledger_mapping.set": "Correspondance comptable modifiée",
+  "journal.created": "Journal créé",
+  "journal.archived": "Journal archivé",
+  "period.created": "Période comptable créée",
+  "period.closed": "Période comptable clôturée",
+  "period.reopened": "Période comptable rouverte",
+  "entry.draft_created": "Brouillon d'écriture créé",
+  "entry.draft_updated": "Brouillon d'écriture modifié",
+  "entry.draft_deleted": "Brouillon d'écriture supprimé",
+  "entry.posted": "Écriture validée",
+  "entry.reversed": "Écriture contre-passée",
+  "accounting.enabled": "Comptabilisation automatique activée",
+  "accounting.settings_saved": "Réglages comptables enregistrés",
+  "tax_profile.saved": "Profil fiscal enregistré",
+  "tax_obligation.created": "Échéance fiscale créée",
+  "tax_obligation.status": "Statut d'échéance fiscale modifié",
+  "tax_obligation.deleted": "Échéance fiscale supprimée",
+  "tax_event.filed": "Déclaration fiscale enregistrée",
+  "tax_event.paid": "Paiement fiscal enregistré",
+  "tax_event.note": "Note fiscale ajoutée",
 };
 
 /** Familles proposées en filtre (préfixe d'action). */
@@ -68,6 +93,10 @@ export const FAMILIES: [string, string][] = [
   ["expense.", "Dépenses"],
   ["attachment.", "Justificatifs"],
   ["export.", "Exports"],
+  ["entry.", "Écritures"],
+  ["period.", "Périodes"],
+  ["ledger_", "Plan de comptes"],
+  ["tax_", "Fiscalité"],
 ];
 
 export interface AuditFilter {

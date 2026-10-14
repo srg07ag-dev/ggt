@@ -11,6 +11,8 @@ import { salesSummary } from "@/modules/sales/documents";
 import { can } from "@/modules/core/permissions";
 import { requireMembership } from "@/modules/core/tenant";
 import { listAccounts } from "@/modules/finance/finance";
+import { upcomingObligations } from "@/modules/tax/obligations";
+import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/session";
 import { withAccess } from "@/lib/with-access";
 
@@ -20,6 +22,7 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
   const { companyId } = await params;
   const user = await requireUser();
   const ctx = await requireMembership(user.id, companyId);
+  const taxDue = can(ctx.role, "tax:read") ? await upcomingObligations(user.id, companyId, 4) : null;
   const accounts = can(ctx.role, "finance:read") ? (await listAccounts(user.id, companyId)).filter((a) => !a.archived) : [];
   const [counts, tasks, opps, stages, sales] = await Promise.all([
     countContactsByState(user.id, companyId),
@@ -90,6 +93,23 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
           )}
         </Card>
       </div>
+      {taxDue && (
+        <Card>
+          <CardTitle hint="Calendrier saisi dans Fiscalité">Prochaines échéances fiscales</CardTitle>
+          {taxDue.length === 0 ? (
+            <p className="text-sm text-muted">Aucune échéance à suivre. <Link className="text-accent" href={`/app/${companyId}/tax`}>Ajouter une échéance</Link></p>
+          ) : (
+            <ul className="divide-y divide-border text-sm">
+              {taxDue.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <Link className="font-medium hover:text-accent" href={`/app/${companyId}/tax/${o.id}`}>{o.title}</Link>
+                  <span className="flex items-center gap-3"><span className="num text-muted">{o.dueDate}</span>{o.state === "overdue" && <Badge tone="danger">En retard</Badge>}{o.state === "due_soon" && <Badge tone="warning">Bientôt</Badge>}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db/client";
+import { seedDefaultJournals } from "@/modules/accounting/journals";
 import { seedDefaultCategories } from "@/modules/finance/finance";
 import { seedDefaultStages } from "@/modules/crm/pipeline";
 import { audit, withTenant } from "./tenant";
@@ -28,6 +29,7 @@ export async function createCompany(userId: string, input: CreateCompanyInput) {
   await withTenant(ctx, async (tx) => {
     await seedDefaultStages(tx, ctx);
     await seedDefaultCategories(tx, ctx);
+    await seedDefaultJournals(tx, ctx);
     await audit(tx, ctx, "company.created", "company", company.id);
   });
   return company;

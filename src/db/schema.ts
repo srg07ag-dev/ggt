@@ -273,9 +273,14 @@ export const taxRate = pgTable(
     name: text("name").notNull(),
     /** Points de base : 18 % = 1800. */
     rateBp: integer("rate_bp").notNull(),
+    /** Compte comptable crédité pour la taxe collectée (comptabilisation automatique). */
+    ledgerAccountId: uuid("ledger_account_id"),
     archivedAt: timestamp("archived_at"),
   },
-  (t) => [unique("tax_rate_company_id_id").on(t.companyId, t.id)],
+  (t) => [
+    unique("tax_rate_company_id_id").on(t.companyId, t.id),
+    foreignKey({ columns: [t.companyId, t.ledgerAccountId], foreignColumns: [ledgerAccount.companyId, ledgerAccount.id] }),
+  ],
 );
 
 export const product = pgTable(
@@ -290,12 +295,15 @@ export const product = pgTable(
     description: text("description"),
     unitPriceMinor: bigint("unit_price_minor", { mode: "number" }).notNull().default(0),
     taxRateId: uuid("tax_rate_id"),
+    /** Compte de produit spécifique ; à défaut, celui des réglages comptables. */
+    revenueAccountId: uuid("revenue_account_id"),
     archivedAt: timestamp("archived_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
     unique("product_company_id_id").on(t.companyId, t.id),
     foreignKey({ columns: [t.companyId, t.taxRateId], foreignColumns: [taxRate.companyId, taxRate.id] }),
+    foreignKey({ columns: [t.companyId, t.revenueAccountId], foreignColumns: [ledgerAccount.companyId, ledgerAccount.id] }),
   ],
 );
 
@@ -382,6 +390,7 @@ export const salesLine = pgTable(
     unitPriceMinor: bigint("unit_price_minor", { mode: "number" }).notNull(),
     /** Photographie du taux au moment de la saisie : un changement ultérieur ne touche pas l'historique. */
     taxName: text("tax_name"),
+    taxRateId: uuid("tax_rate_id"),
     taxRateBp: integer("tax_rate_bp").notNull().default(0),
     netMinor: bigint("net_minor", { mode: "number" }).notNull(),
     taxMinor: bigint("tax_minor", { mode: "number" }).notNull(),
@@ -389,6 +398,7 @@ export const salesLine = pgTable(
   (t) => [
     foreignKey({ columns: [t.companyId, t.documentId], foreignColumns: [salesDocument.companyId, salesDocument.id] }).onDelete("cascade"),
     foreignKey({ columns: [t.companyId, t.productId], foreignColumns: [product.companyId, product.id] }),
+    foreignKey({ columns: [t.companyId, t.taxRateId], foreignColumns: [taxRate.companyId, taxRate.id] }),
   ],
 );
 
@@ -432,10 +442,15 @@ export const financeAccount = pgTable(
     currency: text("currency").notNull(),
     /** Solde au démarrage du suivi, en unités mineures (peut être négatif). */
     openingBalanceMinor: bigint("opening_balance_minor", { mode: "number" }).notNull().default(0),
+    /** Compte comptable de ce compte de trésorerie (comptabilisation automatique). */
+    ledgerAccountId: uuid("ledger_account_id"),
     archivedAt: timestamp("archived_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [unique("finance_account_company_id_id").on(t.companyId, t.id)],
+  (t) => [
+    unique("finance_account_company_id_id").on(t.companyId, t.id),
+    foreignKey({ columns: [t.companyId, t.ledgerAccountId], foreignColumns: [ledgerAccount.companyId, ledgerAccount.id] }),
+  ],
 );
 
 export const supplier = pgTable(
@@ -468,11 +483,14 @@ export const financeCategory = pgTable(
       .references(() => company.id, { onDelete: "cascade" }),
     kind: entryKindEnum("kind").notNull(),
     name: text("name").notNull(),
+    /** Compte de charge (dépense) ou de produit (recette) pour la comptabilisation automatique. */
+    ledgerAccountId: uuid("ledger_account_id"),
     archivedAt: timestamp("archived_at"),
   },
   (t) => [
     unique("finance_category_company_id_id").on(t.companyId, t.id),
     unique("finance_category_name").on(t.companyId, t.kind, t.name),
+    foreignKey({ columns: [t.companyId, t.ledgerAccountId], foreignColumns: [ledgerAccount.companyId, ledgerAccount.id] }),
   ],
 );
 
@@ -563,3 +581,258 @@ export const appRateLimit = pgTable("app_rate_limit", {
   windowStart: timestamp("window_start", { withTimezone: true }).notNull().defaultNow(),
   count: integer("count").notNull().default(0),
 });
+
+/* ---------- Comptabilité en partie double ---------- */
+
+export const accountTypeEnum = pgEnum("account_type", ["asset", "liability", "equity", "revenue", "expense"]);
+export const journalKindEnum = pgEnum("journal_kind", ["sales", "purchases", "treasury", "misc"]);
+export const periodStatusEnum = pgEnum("period_status", ["open", "closed"]);
+export const entryStatusEnum = pgEnum("journal_entry_status", ["draft", "posted"]);
+
+/**
+ * Plan de comptes de l'entreprise. Aucun plan réglementaire n'est fourni avec le produit : l'entreprise (ou son comptable)
+ * saisit ou importe celui de son référentiel. Le type détermine le sens normal du solde.
+ */
+export const ledgerAccount = pgTable(
+  "ledger_account",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    type: accountTypeEnum("type").notNull(),
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique("ledger_account_company_id_id").on(t.companyId, t.id), unique("ledger_account_code").on(t.companyId, t.code)],
+);
+
+export const journal = pgTable(
+  "journal",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    kind: journalKindEnum("kind").notNull(),
+    archivedAt: timestamp("archived_at"),
+  },
+  (t) => [unique("journal_company_id_id").on(t.companyId, t.id), unique("journal_code").on(t.companyId, t.code)],
+);
+
+/** Exercices / périodes. Sans chevauchement (contrainte d'exclusion) ; une période clôturée verrouille les écritures. */
+export const fiscalPeriod = pgTable(
+  "fiscal_period",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    status: periodStatusEnum("status").notNull().default("open"),
+    closedAt: timestamp("closed_at"),
+    closedBy: text("closed_by").references(() => user.id, { onDelete: "set null" }),
+  },
+  (t) => [unique("fiscal_period_company_id_id").on(t.companyId, t.id)],
+);
+
+export const journalEntry = pgTable(
+  "journal_entry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    journalId: uuid("journal_id").notNull(),
+    periodId: uuid("period_id"),
+    entryDate: date("entry_date").notNull(),
+    /** Attribué à la validation, sans trou, par journal et par année. */
+    number: text("number"),
+    description: text("description").notNull(),
+    status: entryStatusEnum("status").notNull().default("draft"),
+    /** manual | invoice | credit_note | payment | expense | income | reversal | opening */
+    sourceType: text("source_type").notNull().default("manual"),
+    sourceId: uuid("source_id"),
+    reversalOfId: uuid("reversal_of_id"),
+    postedAt: timestamp("posted_at"),
+    postedBy: text("posted_by").references(() => user.id, { onDelete: "set null" }),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("journal_entry_idx").on(t.companyId, t.entryDate),
+    unique("journal_entry_company_id_id").on(t.companyId, t.id),
+    unique("journal_entry_number").on(t.companyId, t.journalId, t.number),
+    foreignKey({ columns: [t.companyId, t.journalId], foreignColumns: [journal.companyId, journal.id] }),
+    foreignKey({ columns: [t.companyId, t.periodId], foreignColumns: [fiscalPeriod.companyId, fiscalPeriod.id] }),
+    foreignKey({ columns: [t.companyId, t.reversalOfId], foreignColumns: [t.companyId, t.id] }),
+  ],
+);
+
+export const journalLine = pgTable(
+  "journal_line",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    entryId: uuid("entry_id").notNull(),
+    position: integer("position").notNull(),
+    accountId: uuid("account_id").notNull(),
+    debitMinor: bigint("debit_minor", { mode: "number" }).notNull().default(0),
+    creditMinor: bigint("credit_minor", { mode: "number" }).notNull().default(0),
+    description: text("description"),
+    /** Tiers (comptabilité auxiliaire) */
+    contactId: uuid("contact_id"),
+    supplierId: uuid("supplier_id"),
+  },
+  (t) => [
+    index("journal_line_account_idx").on(t.companyId, t.accountId),
+    foreignKey({ columns: [t.companyId, t.entryId], foreignColumns: [journalEntry.companyId, journalEntry.id] }).onDelete("cascade"),
+    foreignKey({ columns: [t.companyId, t.accountId], foreignColumns: [ledgerAccount.companyId, ledgerAccount.id] }),
+    foreignKey({ columns: [t.companyId, t.contactId], foreignColumns: [contact.companyId, contact.id] }),
+    foreignKey({ columns: [t.companyId, t.supplierId], foreignColumns: [supplier.companyId, supplier.id] }),
+  ],
+);
+
+export const entryCounter = pgTable(
+  "entry_counter",
+  {
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    journalId: uuid("journal_id").notNull(),
+    /** Année du numéro (« VT-2026-000001 ») : le compteur repart à 1 chaque année, quel que soit le nombre de périodes. */
+    year: integer("year").notNull(),
+    last: integer("last").notNull().default(0),
+  },
+  (t) => [unique("entry_counter_key").on(t.companyId, t.journalId, t.year)],
+);
+
+/** Activation et correspondances pour la comptabilisation automatique des ventes et des finances. */
+export const accountingSettings = pgTable(
+  "accounting_settings",
+  {
+    companyId: uuid("company_id")
+      .primaryKey()
+      .references(() => company.id, { onDelete: "cascade" }),
+    enabled: boolean("enabled").notNull().default(false),
+    /** Seuls les documents et opérations datés à partir de ce jour sont comptabilisés automatiquement. */
+    enabledFrom: date("enabled_from"),
+    receivableAccountId: uuid("receivable_account_id"),
+    revenueAccountId: uuid("revenue_account_id"),
+    taxCollectedAccountId: uuid("tax_collected_account_id"),
+    taxDeductibleAccountId: uuid("tax_deductible_account_id"),
+    expenseAccountId: uuid("expense_account_id"),
+    otherIncomeAccountId: uuid("other_income_account_id"),
+    salesJournalId: uuid("sales_journal_id"),
+    purchasesJournalId: uuid("purchases_journal_id"),
+    treasuryJournalId: uuid("treasury_journal_id"),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => {
+    const acc = (c: typeof t.receivableAccountId) => foreignKey({ columns: [t.companyId, c], foreignColumns: [ledgerAccount.companyId, ledgerAccount.id] });
+    const jr = (c: typeof t.salesJournalId) => foreignKey({ columns: [t.companyId, c], foreignColumns: [journal.companyId, journal.id] });
+    return [
+      acc(t.receivableAccountId),
+      acc(t.revenueAccountId),
+      acc(t.taxCollectedAccountId),
+      acc(t.taxDeductibleAccountId),
+      acc(t.expenseAccountId),
+      acc(t.otherIncomeAccountId),
+      jr(t.salesJournalId),
+      jr(t.purchasesJournalId),
+      jr(t.treasuryJournalId),
+    ];
+  },
+);
+
+/* ---------- Fiscalité : règles versionnées et suivi des obligations ---------- */
+
+export const rulesetStatusEnum = pgEnum("ruleset_status", ["draft", "validated", "retired"]);
+
+/**
+ * Règles réglementaires par juridiction (données de plateforme, pas de l'entreprise). Aucune règle n'est livrée avec le produit :
+ * une règle n'est utilisable qu'une fois « validated » (source citée, validateur et date), et reste immuable ensuite — un
+ * changement de règle est une nouvelle version avec ses propres dates de validité, l'historique n'est jamais réécrit.
+ */
+export const ruleset = pgTable(
+  "ruleset",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    jurisdiction: text("jurisdiction").notNull(), // ISO 3166-1 alpha-2
+    kind: text("kind").notNull(), // tax | chart_of_accounts | numbering | invoice_mentions …
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    version: integer("version").notNull(),
+    validFrom: date("valid_from").notNull(),
+    validTo: date("valid_to"),
+    status: rulesetStatusEnum("status").notNull().default("draft"),
+    sourceReference: text("source_reference"),
+    validatedBy: text("validated_by"),
+    validatedAt: timestamp("validated_at"),
+    payload: jsonb("payload").notNull().default({}),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique("ruleset_version").on(t.jurisdiction, t.kind, t.code, t.version)],
+);
+
+/** Situation fiscale déclarée par l'entreprise (saisie libre, non interprétée tant qu'aucune règle validée n'existe). */
+export const companyTaxProfile = pgTable("company_tax_profile", {
+  companyId: uuid("company_id")
+    .primaryKey()
+    .references(() => company.id, { onDelete: "cascade" }),
+  regimeLabel: text("regime_label"),
+  vatRegistered: boolean("vat_registered"),
+  filingFrequency: text("filing_frequency"),
+  notes: text("notes"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const obligationStatusEnum = pgEnum("obligation_status", ["todo", "filed", "paid", "not_applicable"]);
+
+/** Échéance fiscale suivie par l'entreprise (saisie manuelle ou issue d'une règle validée). */
+export const taxObligation = pgTable(
+  "tax_obligation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    authority: text("authority"),
+    periodLabel: text("period_label"),
+    dueDate: date("due_date").notNull(),
+    status: obligationStatusEnum("status").notNull().default("todo"),
+    notes: text("notes"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("tax_obligation_idx").on(t.companyId, t.dueDate), unique("tax_obligation_company_id_id").on(t.companyId, t.id)],
+);
+
+/** Historique des déclarations et paiements (ajout seul). */
+export const taxEvent = pgTable(
+  "tax_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    obligationId: uuid("obligation_id").notNull(),
+    kind: text("kind").notNull(), // filed | paid | note
+    occurredOn: date("occurred_on").notNull(),
+    amountMinor: bigint("amount_minor", { mode: "number" }),
+    reference: text("reference"),
+    notes: text("notes"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [foreignKey({ columns: [t.companyId, t.obligationId], foreignColumns: [taxObligation.companyId, taxObligation.id] })],
+);

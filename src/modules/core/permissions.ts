@@ -11,6 +11,10 @@ export const PERMISSIONS = [
   "finance:read",
   "finance:write",
   "audit:read",
+  "accounting:read",
+  "accounting:write",
+  "tax:read",
+  "tax:write",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -22,7 +26,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   admin: all.filter((p) => p !== "company:manage"),
   manager: ["crm:read", "crm:write", "sales:read", "sales:write", "finance:read"],
   member: ["crm:read", "crm:write", "sales:read"],
-  accountant: ["crm:read", "sales:read", "finance:read", "finance:write", "audit:read"],
+  accountant: ["crm:read", "sales:read", "finance:read", "finance:write", "audit:read", "accounting:read", "accounting:write", "tax:read", "tax:write"],
   viewer: ["crm:read", "sales:read", "finance:read"],
 };
 
@@ -58,9 +62,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   owner: "Contrôle total, y compris les paramètres de l'entreprise et la propriété.",
-  admin: "Gère les membres (sauf propriétaires et administrateurs), le CRM, les ventes et les finances.",
+  admin: "Gère les membres (sauf propriétaires et administrateurs), le CRM, les ventes, les finances, la comptabilité et le suivi fiscal.",
   manager: "CRM et ventes en écriture, finances en lecture.",
   member: "CRM en écriture, ventes en lecture. Pas d'accès aux finances.",
-  accountant: "Finances en écriture, CRM et ventes en lecture, journal d'audit.",
+  accountant: "Finances, comptabilité et suivi fiscal en écriture, CRM et ventes en lecture, journal d'audit.",
   viewer: "Consultation du CRM, des ventes et des finances.",
 };

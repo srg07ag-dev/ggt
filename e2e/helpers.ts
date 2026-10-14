@@ -20,6 +20,9 @@ export async function mailLink(to: string, subject: string): Promise<string> {
 
 /** Inscription puis confirmation de l'adresse via le lien reçu (connexion automatique à la fin). */
 export async function signupVerified(page: Page, name: string, email: string, startPath = "/signup", password = "motdepasse-solide-9") {
+  // chaque utilisateur de test arrive d'une IP simulée distincte : les limites par IP (inscription, connexion) ne se gênent pas entre tests
+  const ip = `198.18.${Math.floor(Math.random() * 250) + 1}.${Math.floor(Math.random() * 250) + 1}`;
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": ip });
   await page.goto(startPath);
   await page.getByLabel("Nom complet").fill(name);
   await page.getByLabel("E-mail").fill(email);
