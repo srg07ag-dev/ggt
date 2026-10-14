@@ -37,7 +37,7 @@ export default async function CompanyLayout({
             <Link
               key={item.href}
               href={item.href}
-              className="flex h-9 items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 text-sm text-muted hover:bg-surface-2 hover:text-text"
+              className="flex h-9 items-center gap-2.5 rounded-full px-3 text-sm text-muted hover:bg-accent-soft hover:text-text"
             >
               <item.icon className="size-4" aria-hidden />
               {item.label}

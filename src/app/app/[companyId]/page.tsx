@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText, Users } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { listContacts } from "@/modules/core/contacts";
 import { requireUser } from "@/lib/session";
@@ -17,6 +18,11 @@ export default async function Dashboard({ params }: { params: Promise<{ companyI
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Vue d&apos;ensemble</h1>
         <p className="text-sm text-muted">Votre activité en un coup d&apos;œil.</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Contacts actifs" value={String(contacts.length)} />
+        <StatCard label="Chiffre d'affaires" value={null} emptyHint="Apparaît après votre première facture" featured />
+        <StatCard label="Factures impayées" value={null} emptyHint="Aucune facture enregistrée" />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
