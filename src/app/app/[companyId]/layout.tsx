@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LayoutDashboard, Users, Plus } from "lucide-react";
+import { CheckSquare, Kanban, LayoutDashboard, Users, Plus } from "lucide-react";
 import { requireUser } from "@/lib/session";
 import { listCompaniesForUser } from "@/modules/core/companies";
 import { ForbiddenError, requireMembership } from "@/modules/core/tenant";
@@ -26,13 +26,15 @@ export default async function CompanyLayout({
   const nav = [
     { href: `/app/${companyId}`, label: "Vue d'ensemble", icon: LayoutDashboard },
     { href: `/app/${companyId}/contacts`, label: "Contacts", icon: Users },
+    { href: `/app/${companyId}/pipeline`, label: "Pipeline", icon: Kanban },
+    { href: `/app/${companyId}/tasks`, label: "Tâches", icon: CheckSquare },
   ];
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[248px_1fr]">
       <aside className="border-b border-border bg-surface p-4 md:border-b-0 md:border-r">
         <div className="mb-6 px-2 text-base font-semibold tracking-tight">GGT</div>
-        <nav aria-label="Navigation principale" className="flex gap-1 md:flex-col">
+        <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col">
           {nav.map((item) => (
             <Link
               key={item.href}

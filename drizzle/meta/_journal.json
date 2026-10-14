@@ -15,6 +15,20 @@
       "when": 1792001791320,
       "tag": "0001_rls_and_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792004099732,
+      "tag": "0002_crm",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792004100687,
+      "tag": "0003_rls_crm",
+      "breakpoints": true
     }
   ]
 }

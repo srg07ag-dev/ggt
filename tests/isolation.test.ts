@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sql as rawSql, db, schema } from "@/db/client";
 import { createCompany } from "@/modules/core/companies";
-import { createContact, listContacts } from "@/modules/core/contacts";
+import { createContact, listContacts } from "@/modules/crm/contacts";
 import { ForbiddenError, requireMembership, withTenant } from "@/modules/core/tenant";
 import { can } from "@/modules/core/permissions";
 import { eq } from "drizzle-orm";

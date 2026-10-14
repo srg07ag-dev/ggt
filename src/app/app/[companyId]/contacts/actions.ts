@@ -1,25 +1,46 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ZodError } from "zod";
+import { runAction, type ActionState } from "@/lib/action";
 import { requireUser } from "@/lib/session";
-import { createContact } from "@/modules/core/contacts";
-import { ForbiddenError } from "@/modules/core/tenant";
+import { createContact, parseTags, setContactArchived, updateContact } from "@/modules/crm/contacts";
 
-export async function createContactAction(companyId: string, _: { error?: string } | undefined, form: FormData) {
+function readContact(form: FormData) {
+  const s = (k: string) => String(form.get(k) ?? "");
+  return {
+    kind: s("kind") === "organization" ? ("organization" as const) : ("person" as const),
+    name: s("name"),
+    email: s("email"),
+    phone: s("phone"),
+    organization: s("organization"),
+    address: s("address"),
+    notes: s("notes"),
+    tags: parseTags(s("tags")),
+    parentId: s("parentId") || undefined,
+  };
+}
+
+export async function createContactAction(companyId: string, _: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireUser();
-  try {
-    await createContact(user.id, companyId, {
-      kind: form.get("kind") === "organization" ? "organization" : "person",
-      name: String(form.get("name") ?? ""),
-      email: String(form.get("email") ?? ""),
-      phone: String(form.get("phone") ?? "") || undefined,
-    });
-  } catch (e) {
-    if (e instanceof ZodError) return { error: "Nom requis et e-mail valide." };
-    if (e instanceof ForbiddenError) return { error: "Vous n'avez pas le droit de créer un contact." };
-    throw e;
-  }
-  revalidatePath(`/app/${companyId}/contacts`);
-  return undefined;
+  const res = await runAction(async () => void (await createContact(user.id, companyId, readContact(form))));
+  if (res?.ok) revalidatePath(`/app/${companyId}/contacts`);
+  return res;
+}
+
+export async function updateContactAction(
+  companyId: string,
+  id: string,
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const res = await runAction(async () => void (await updateContact(user.id, companyId, id, readContact(form))));
+  if (res?.ok) revalidatePath(`/app/${companyId}/contacts`, "layout");
+  return res;
+}
+
+export async function archiveContactAction(companyId: string, id: string, archived: boolean) {
+  const user = await requireUser();
+  await setContactArchived(user.id, companyId, id, archived);
+  revalidatePath(`/app/${companyId}/contacts`, "layout");
 }
