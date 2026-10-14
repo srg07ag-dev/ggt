@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["postgres"],
+  serverExternalPackages: ["postgres", "pdfkit"],
   async headers() {
     return [
       {

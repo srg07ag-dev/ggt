@@ -18,3 +18,9 @@ export function formatMoney(minor: number, currency: string, locale = "fr-FR"): 
   const exp = currencyExponent(currency);
   return new Intl.NumberFormat(locale, { style: "currency", currency }).format(minor / 10 ** exp);
 }
+
+/** Montant prêt à être pré-rempli dans un champ de saisie : 120,00 (sans symbole ni séparateur de milliers). */
+export function formatPlain(minor: number, currency: string): string {
+  const exp = currencyExponent(currency);
+  return (minor / 10 ** exp).toFixed(exp).replace(".", ",");
+}

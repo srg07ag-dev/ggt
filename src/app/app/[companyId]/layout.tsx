@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckSquare, Kanban, LayoutDashboard, Users, Plus } from "lucide-react";
+import { CheckSquare, FilePlus2, FileText, Kanban, LayoutDashboard, Package, Plus, Settings, Users } from "lucide-react";
 import { requireUser } from "@/lib/session";
 import { listCompaniesForUser } from "@/modules/core/companies";
 import { ForbiddenError, requireMembership } from "@/modules/core/tenant";
@@ -28,6 +28,10 @@ export default async function CompanyLayout({
     { href: `/app/${companyId}/contacts`, label: "Contacts", icon: Users },
     { href: `/app/${companyId}/pipeline`, label: "Pipeline", icon: Kanban },
     { href: `/app/${companyId}/tasks`, label: "Tâches", icon: CheckSquare },
+    { href: `/app/${companyId}/quotes`, label: "Devis", icon: FilePlus2 },
+    { href: `/app/${companyId}/invoices`, label: "Factures", icon: FileText },
+    { href: `/app/${companyId}/catalog`, label: "Catalogue", icon: Package },
+    { href: `/app/${companyId}/settings`, label: "Paramètres", icon: Settings },
   ];
 
   return (

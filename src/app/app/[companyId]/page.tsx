@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -7,6 +7,7 @@ import { countOpenActivities } from "@/modules/crm/activities";
 import { countContactsByState } from "@/modules/crm/contacts";
 import { listOpportunities, listStages } from "@/modules/crm/pipeline";
 import { formatMoney } from "@/lib/money";
+import { salesSummary } from "@/modules/sales/documents";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "Vue d'ensemble" };
@@ -14,11 +15,12 @@ export const metadata = { title: "Vue d'ensemble" };
 export default async function Dashboard({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   const user = await requireUser();
-  const [counts, tasks, opps, stages] = await Promise.all([
+  const [counts, tasks, opps, stages, sales] = await Promise.all([
     countContactsByState(user.id, companyId),
     countOpenActivities(user.id, companyId),
     listOpportunities(user.id, companyId),
     listStages(user.id, companyId),
+    salesSummary(user.id, companyId),
   ]);
   const openStageIds = new Set(stages.filter((s) => s.kind === "open").map((s) => s.id));
   const open = opps.filter((o) => openStageIds.has(o.stageId));
@@ -48,7 +50,19 @@ export default async function Dashboard({ params }: { params: Promise<{ companyI
           deltaTone="danger"
         />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Facturé TTC (net d'avoirs)" value={sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null} emptyHint="Apparaît après votre première facture émise" />
+        <StatCard label="Encaissé" value={sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null} emptyHint="Paiements enregistrés uniquement" />
+        <StatCard
+          label="Créances clients"
+          value={sales.invoices ? formatMoney(sales.outstandingMinor, sales.currency) : null}
+          delta={sales.overdueCount ? `${sales.overdueCount} en retard` : undefined}
+          deltaTone="danger"
+          compare={sales.overdueMinor ? `Dont en retard : ${formatMoney(sales.overdueMinor, sales.currency)}` : undefined}
+          emptyHint="Aucune facture émise"
+        />
+      </div>
+      <div className="grid gap-4">
         <Card>
           <CardTitle hint="Contacts actifs de cette entreprise">Clients et prospects</CardTitle>
           {counts.active === 0 ? (
@@ -65,14 +79,6 @@ export default async function Dashboard({ params }: { params: Promise<{ companyI
           ) : (
             <p className="text-sm text-muted">Consultez la liste pour le détail.</p>
           )}
-        </Card>
-        <Card>
-          <CardTitle hint="Factures impayées et encaissements">Facturation</CardTitle>
-          <EmptyState
-            icon={<FileText className="size-6" />}
-            title="Facturation bientôt disponible"
-            description="Aucun chiffre n'est affiché tant que les données ne sont pas réellement enregistrées."
-          />
         </Card>
       </div>
     </div>

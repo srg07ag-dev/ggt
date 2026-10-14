@@ -29,6 +29,20 @@
       "when": 1792004100687,
       "tag": "0003_rls_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792006000225,
+      "tag": "0004_sales",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792006001321,
+      "tag": "0005_sales_rls_locks",
+      "breakpoints": true
     }
   ]
 }

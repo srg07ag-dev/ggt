@@ -87,6 +87,11 @@ export const company = pgTable("company", {
   /** ISO 4217 */
   currency: text("currency").notNull(),
   timezone: text("timezone").notNull().default("UTC"),
+  /** Identité de l'émetteur, reproduite sur les documents (photographiée à l'émission). */
+  address: text("address"),
+  taxId: text("tax_id"),
+  email: text("email"),
+  phone: text("phone"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -230,5 +235,160 @@ export const activity = pgTable(
     foreignKey({ columns: [t.companyId, t.opportunityId], foreignColumns: [opportunity.companyId, opportunity.id] }),
     // l'assigné doit être membre de la même entreprise
     foreignKey({ columns: [t.companyId, t.assigneeId], foreignColumns: [membership.companyId, membership.userId] }),
+  ],
+);
+
+/* ---------- Ventes : catalogue, taxes, numérotation ---------- */
+
+/** Taux saisis par l'entreprise (aucune valeur par défaut : les taux relèvent de la réglementation locale). */
+export const taxRate = pgTable(
+  "tax_rate",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Points de base : 18 % = 1800. */
+    rateBp: integer("rate_bp").notNull(),
+    archivedAt: timestamp("archived_at"),
+  },
+  (t) => [unique("tax_rate_company_id_id").on(t.companyId, t.id)],
+);
+
+export const product = pgTable(
+  "product",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull().default("service"), // product | service
+    name: text("name").notNull(),
+    description: text("description"),
+    unitPriceMinor: bigint("unit_price_minor", { mode: "number" }).notNull().default(0),
+    taxRateId: uuid("tax_rate_id"),
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    unique("product_company_id_id").on(t.companyId, t.id),
+    foreignKey({ columns: [t.companyId, t.taxRateId], foreignColumns: [taxRate.companyId, taxRate.id] }),
+  ],
+);
+
+export const docTypeEnum = pgEnum("doc_type", ["quote", "invoice", "credit_note"]);
+export const docStatusEnum = pgEnum("doc_status", ["draft", "sent", "accepted", "declined", "converted", "issued"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["cash", "bank_transfer", "mobile_money", "card", "cheque", "other"]);
+
+/** Motif de numérotation par type de document, ex. « FA-{YYYY}-{NNNN} ». */
+export const numbering = pgTable(
+  "numbering",
+  {
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    docType: docTypeEnum("doc_type").notNull(),
+    pattern: text("pattern").notNull(),
+  },
+  (t) => [unique("numbering_company_type").on(t.companyId, t.docType)],
+);
+
+export const numberingCounter = pgTable(
+  "numbering_counter",
+  {
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    docType: docTypeEnum("doc_type").notNull(),
+    /** Année si le motif contient {YYYY}, sinon chaîne vide. */
+    period: text("period").notNull().default(""),
+    last: integer("last").notNull().default(0),
+  },
+  (t) => [unique("numbering_counter_key").on(t.companyId, t.docType, t.period)],
+);
+
+export const salesDocument = pgTable(
+  "sales_document",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    type: docTypeEnum("type").notNull(),
+    status: docStatusEnum("status").notNull().default("draft"),
+    /** Attribué à l'émission (facture, avoir) ou à l'envoi (devis) ; sans trou. */
+    number: text("number"),
+    contactId: uuid("contact_id").notNull(),
+    /** Devis d'origine (facture) ou facture d'origine (avoir). */
+    relatedId: uuid("related_id"),
+    issueDate: date("issue_date").notNull(),
+    dueDate: date("due_date"),
+    currency: text("currency").notNull(),
+    subtotalMinor: bigint("subtotal_minor", { mode: "number" }).notNull().default(0),
+    taxMinor: bigint("tax_minor", { mode: "number" }).notNull().default(0),
+    totalMinor: bigint("total_minor", { mode: "number" }).notNull().default(0),
+    notes: text("notes"),
+    /** Identités émetteur et client figées à l'émission. */
+    snapshot: jsonb("snapshot"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    issuedAt: timestamp("issued_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("sales_document_idx").on(t.companyId, t.type, t.status),
+    unique("sales_document_company_id_id").on(t.companyId, t.id),
+    unique("sales_document_number").on(t.companyId, t.type, t.number),
+    foreignKey({ columns: [t.companyId, t.contactId], foreignColumns: [contact.companyId, contact.id] }),
+    foreignKey({ columns: [t.companyId, t.relatedId], foreignColumns: [t.companyId, t.id] }),
+  ],
+);
+
+export const salesLine = pgTable(
+  "sales_line",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    documentId: uuid("document_id").notNull(),
+    position: integer("position").notNull(),
+    productId: uuid("product_id"),
+    description: text("description").notNull(),
+    /** Millièmes d'unité : 2,5 → 2500. */
+    quantityMilli: integer("quantity_milli").notNull(),
+    unitPriceMinor: bigint("unit_price_minor", { mode: "number" }).notNull(),
+    /** Photographie du taux au moment de la saisie : un changement ultérieur ne touche pas l'historique. */
+    taxName: text("tax_name"),
+    taxRateBp: integer("tax_rate_bp").notNull().default(0),
+    netMinor: bigint("net_minor", { mode: "number" }).notNull(),
+    taxMinor: bigint("tax_minor", { mode: "number" }).notNull(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.companyId, t.documentId], foreignColumns: [salesDocument.companyId, salesDocument.id] }).onDelete("cascade"),
+    foreignKey({ columns: [t.companyId, t.productId], foreignColumns: [product.companyId, product.id] }),
+  ],
+);
+
+/** Paiements en ajout seul : une erreur s'annule (voided_at), elle ne se modifie pas. */
+export const payment = pgTable(
+  "payment",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id").notNull(),
+    amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+    paidOn: date("paid_on").notNull(),
+    method: paymentMethodEnum("method").notNull(),
+    reference: text("reference"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    voidedAt: timestamp("voided_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("payment_invoice_idx").on(t.companyId, t.invoiceId),
+    foreignKey({ columns: [t.companyId, t.invoiceId], foreignColumns: [salesDocument.companyId, salesDocument.id] }),
   ],
 );

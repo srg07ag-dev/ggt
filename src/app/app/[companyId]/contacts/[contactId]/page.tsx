@@ -10,6 +10,8 @@ import { requireMembership } from "@/modules/core/tenant";
 import { listActivities } from "@/modules/crm/activities";
 import { getContact, listContactOptions } from "@/modules/crm/contacts";
 import { listOpportunities, listStages } from "@/modules/crm/pipeline";
+import { listDocuments } from "@/modules/sales/documents";
+import { DocStatusBadge } from "../../documents/status";
 import { ActivityForm } from "../../tasks/activity-form";
 import { ActivityList } from "../../tasks/activity-list";
 import { archiveContactAction } from "../actions";
@@ -23,12 +25,17 @@ export default async function ContactPage({ params }: { params: Promise<{ compan
   const found = await getContact(user.id, companyId, contactId);
   if (!found) notFound();
   const { contact, people } = found;
-  const [activities, opps, stages, parents] = await Promise.all([
+  const [activities, opps, stages, parents, quotes, invoices, credits] = await Promise.all([
     listActivities(user.id, companyId, { contactId }),
     listOpportunities(user.id, companyId),
     listStages(user.id, companyId),
     listContactOptions(user.id, companyId, "organization"),
+    listDocuments(user.id, companyId, "quote"),
+    listDocuments(user.id, companyId, "invoice"),
+    listDocuments(user.id, companyId, "credit_note"),
   ]);
+  const docs = [...quotes, ...invoices, ...credits].filter((x) => x.contactId === contactId);
+  const due = invoices.filter((x) => x.contactId === contactId).reduce((n, x) => n + x.settlement.outstandingMinor, 0);
   const mine = opps.filter((o) => o.contactId === contactId);
   const canWrite = can(ctx.role, "crm:write");
   const archived = !!contact.archivedAt;
@@ -72,8 +79,22 @@ export default async function ContactPage({ params }: { params: Promise<{ compan
             )}
           </Card>
           <Card>
-            <CardTitle hint="Devis, factures, paiements et créances seront affichés ici avec le module Ventes">Facturation</CardTitle>
-            <p className="text-sm text-muted">Aucun document pour l&apos;instant.</p>
+            <CardTitle hint="Devis, factures et avoirs de ce client">Facturation</CardTitle>
+            {docs.length === 0 ? (
+              <p className="text-sm text-muted">Aucun document pour l&apos;instant.</p>
+            ) : (
+              <>
+                <ul className="divide-y divide-border text-sm">
+                  {docs.map((x) => (
+                    <li key={x.id} className="flex items-center justify-between gap-3 py-2">
+                      <Link className="font-medium hover:text-accent" href={`/app/${companyId}/documents/${x.id}`}>{x.number ?? "Brouillon"}</Link>
+                      <span className="flex items-center gap-3"><span className="num">{formatMoney(x.totalMinor, x.currency)}</span><DocStatusBadge type={x.type} status={x.status} settlement={x.settlement} /></span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-sm text-muted">Créances en cours : <span className="num font-medium text-text">{docs[0] ? formatMoney(due, docs[0].currency) : "—"}</span></p>
+              </>
+            )}
           </Card>
         </div>
 

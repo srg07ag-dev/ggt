@@ -56,6 +56,45 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   await expect(page.getByRole("region", { name: "Gagné" }).getByRole("article")).toContainText("Refonte site");
   await page.screenshot({ path: `e2e/shot-pipeline-${info.project.name}.png` });
 
+  // Ventes : configuration, catalogue, facture, paiement partiel, PDF, avoir
+  await page.goto(dashUrl + "/settings");
+  await page.getByLabel("Factures", { exact: true }).fill("FA-{YYYY}-{NNNN}");
+  await page.getByLabel("Avoirs").fill("AV-{NNNN}");
+  await page.getByRole("button", { name: "Enregistrer" }).last().click();
+  await expect(page.getByRole("status")).toContainText("Enregistré");
+  await page.goto(dashUrl + "/catalog");
+  await page.getByLabel("Nom de la taxe").fill("Taxe test");
+  await page.getByLabel("Taux (%)").fill("10");
+  await page.getByRole("button", { name: "Ajouter", exact: true }).click();
+  await expect(page.getByText("Taxe test 10 %")).toBeVisible();
+  await page.goto(dashUrl + "/invoices");
+  await page.getByText("+ Nouvelle facture").click();
+  await page.getByLabel("Client").selectOption({ label: "Client Un" });
+  await page.getByRole("button", { name: "Créer la facture" }).click();
+  await page.waitForURL(/\/documents\//);
+  await page.getByLabel("Description").fill("Prestation");
+  await page.getByLabel("Prix unitaire HT").fill("1000");
+  await page.getByLabel("Taxe", { exact: true }).selectOption({ label: "Taxe test (10 %)" });
+  await page.getByRole("button", { name: "Ajouter la ligne" }).click();
+  await expect(page.getByText("Total TTC").last()).toBeVisible();
+  page.once("dialog", (dlg) => dlg.accept());
+  await page.getByRole("button", { name: "Émettre la facture" }).click();
+  await expect(page.getByRole("heading", { name: /^FA-\d{4}-0001$/ })).toBeVisible();
+  await expect(page.getByText("À payer", { exact: true })).toBeVisible();
+  await page.getByText("+ Enregistrer un paiement").click();
+  await page.getByLabel(/Montant/).fill("400");
+  await page.getByRole("button", { name: "Enregistrer le paiement" }).click();
+  await expect(page.getByText("Partiellement payée")).toBeVisible();
+  await expect(page.getByText(/· Virement/)).toBeVisible();
+  const pdf = await page.request.get(page.url() + "/pdf");
+  expect(pdf.status()).toBe(200);
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
+  const docUrl = page.url();
+  await page.screenshot({ path: `e2e/shot-invoice-${info.project.name}.png`, fullPage: true });
+  await page.goto(dashUrl);
+  await expect(page.getByText("Créances clients")).toBeVisible();
+
   // Archivage
   await page.goto(dashUrl + "/contacts");
   await page.getByRole("link", { name: "Client Un" }).click();
@@ -76,4 +115,6 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   expect(res?.status()).toBe(404);
   await expect(p2.getByText("Client Un")).toHaveCount(0);
   expect((await p2.goto(dashUrl + "/pipeline"))?.status()).toBe(404);
+  expect((await p2.goto(docUrl))?.status()).toBe(404);
+  expect((await p2.request.get(docUrl + "/pdf")).status()).toBe(404);
 });
