@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BarChart3, UserCog, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Settings, Truck, Users } from "lucide-react";
+import { BarChart3, ScrollText, UserCog, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Settings, Truck, Users } from "lucide-react";
 import { can, ROLE_LABELS } from "@/modules/core/permissions";
 import { SignOutButton } from "@/components/sign-out";
 import { requireUser } from "@/lib/session";
@@ -60,7 +60,7 @@ export default async function CompanyLayout({
           },
         ]
       : []),
-    { title: "Organisation", items: [{ href: `${b}/members`, label: "Membres", icon: UserCog }, { href: `${b}/settings`, label: "Paramètres", icon: Settings }] },
+    { title: "Organisation", items: [{ href: `${b}/members`, label: "Membres", icon: UserCog }, ...(can(membership.role, "audit:read") ? [{ href: `${b}/audit`, label: "Journal d'audit", icon: ScrollText }] : []), { href: `${b}/settings`, label: "Paramètres", icon: Settings }] },
   ];
 
   return (
@@ -104,7 +104,7 @@ export default async function CompanyLayout({
       <div className="min-w-0">
         <header className="flex h-14 items-center justify-between border-b border-border px-4 md:px-8">
           <span className="text-sm text-muted">{current?.name}</span>
-          <span className="flex items-center gap-4 text-sm"><span>{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span><SignOutButton /></span>
+          <span className="flex items-center gap-4 text-sm"><span>{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span><Link href="/account/security" className="text-muted hover:text-text">Sécurité</Link><SignOutButton /></span>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-8 md:px-8">{children}</main>
       </div>

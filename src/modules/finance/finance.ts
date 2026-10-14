@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte, isNull, lte, sql, type SQL } from "drizzle-orm
 import { z } from "zod";
 import { schema } from "@/db/client";
 import { toMinor } from "@/lib/money";
+import { rateLimit } from "@/lib/rate-limit";
 import { deletePrivateFile, getPrivateFile, putPrivateFile, safeFilename } from "@/lib/storage";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "@/modules/core/tenant";
 import { BusinessRuleError } from "@/modules/sales/documents";
@@ -252,6 +253,7 @@ export async function listReceipts(userId: string, companyId: string, f: { from?
 
 export async function addAttachment(userId: string, companyId: string, entryId: string, file: { name: string; data: Buffer }) {
   const ctx = await requireMembership(userId, companyId, "finance:write");
+  await rateLimit(`upload:${userId}`, 100, 3600);
   const stored = await putPrivateFile(companyId, file.data);
   try {
     return await withTenant(ctx, async (tx) => {

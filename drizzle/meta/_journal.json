@@ -71,6 +71,20 @@
       "when": 1792008264661,
       "tag": "0009_invitations_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792014921713,
+      "tag": "0010_auth_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792015243748,
+      "tag": "0011_app_rate_limit",
+      "breakpoints": true
     }
   ]
 }

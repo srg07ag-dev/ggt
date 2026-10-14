@@ -1,5 +1,7 @@
 import { getSession } from "@/lib/session";
+import { RateLimitError } from "@/lib/rate-limit";
 import { ForbiddenError } from "@/modules/core/tenant";
+import { rateLimit } from "@/lib/rate-limit";
 import { readAttachment } from "@/modules/finance/finance";
 
 /** Téléchargement protégé : session + appartenance à l'entreprise, jamais d'URL publique. */
@@ -9,6 +11,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ companyId:
   if (!session) return new Response("Non authentifié", { status: 401 });
   if (!/^[0-9a-f-]{36}$/i.test(attachmentId)) return new Response("Introuvable", { status: 404 });
   try {
+    await rateLimit(`download:${session.user.id}`, 300, 60);
     const file = await readAttachment(session.user.id, companyId, attachmentId);
     if (!file) return new Response("Introuvable", { status: 404 });
     return new Response(new Uint8Array(file.data), {
@@ -22,6 +25,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ companyId:
     });
   } catch (e) {
     if (e instanceof ForbiddenError) return new Response("Introuvable", { status: 404 });
+    if (e instanceof RateLimitError) return new Response(e.message, { status: 429, headers: { "retry-after": String(e.retryAfterSeconds) } });
     throw e;
   }
 }

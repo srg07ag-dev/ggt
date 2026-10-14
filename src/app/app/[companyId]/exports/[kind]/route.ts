@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/session";
+import { RateLimitError } from "@/lib/rate-limit";
 import { ForbiddenError } from "@/modules/core/tenant";
 import { buildExport, EXPORT_KINDS, parsePeriod, type ExportKind } from "@/modules/finance/reports";
 
@@ -19,6 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ companyI
     });
   } catch (e) {
     if (e instanceof ForbiddenError) return new Response("Introuvable", { status: 404 });
+    if (e instanceof RateLimitError) return new Response(e.message, { status: 429, headers: { "retry-after": String(e.retryAfterSeconds) } });
     throw e;
   }
 }

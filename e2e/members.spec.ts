@@ -1,21 +1,14 @@
 import { expect, test } from "@playwright/test";
+import { signupVerified } from "./helpers";
 
 test.setTimeout(120_000);
-
-async function signup(page: import("@playwright/test").Page, name: string, email: string, path = "/signup") {
-  await page.goto(path);
-  await page.getByLabel("Nom complet").fill(name);
-  await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Mot de passe").fill("motdepasse-solide-9");
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
-}
 
 test("invitation, rôles, accès et retrait d'un membre", async ({ page, browser }, info) => {
   const tag = `${info.project.name}${Date.now()}`;
   const carol = `carol-${tag}@test.dev`;
 
   // Propriétaire : compte + entreprise
-  await signup(page, "Olga Owner", `olga-${tag}@test.dev`);
+  await signupVerified(page, "Olga Owner", `olga-${tag}@test.dev`);
   await page.waitForURL("**/onboarding");
   await page.getByLabel("Nom de l'entreprise").fill("Olga SARL");
   await page.getByLabel("Pays (code ISO)").fill("TG");
@@ -34,14 +27,13 @@ test("invitation, rôles, accès et retrait d'un membre", async ({ page, browser
   await expect(page.getByText("expire le")).toBeVisible();
 
   // Carol ouvre le lien, crée son compte (retour automatique sur l'invitation), accepte
-  await page.waitForTimeout(11_000);
   const c = await browser.newContext();
   const cp = await c.newPage();
   await cp.goto(link);
   await expect(cp.getByRole("heading", { name: "Rejoindre Olga SARL" })).toBeVisible();
   await cp.getByRole("link", { name: "Créer un compte" }).click();
   await cp.waitForURL(/\/signup\?next=/);
-  await signup(cp, "Carol Lecteur", carol, cp.url().replace(/^https?:\/\/[^/]+/, ""));
+  await signupVerified(cp, "Carol Lecteur", carol, cp.url().replace(/^https?:\/\/[^/]+/, ""));
   await cp.waitForURL(/\/invite\//);
   await cp.getByRole("button", { name: "Accepter l'invitation" }).click();
   await cp.waitForURL(dash);
@@ -51,6 +43,11 @@ test("invitation, rôles, accès et retrait d'un membre", async ({ page, browser
   await expect(cp.getByText("+ Nouveau contact")).toHaveCount(0); // pas d'écriture pour un lecteur
   await cp.goto(dash + "/members");
   await expect(cp.getByLabel("Inviter")).toHaveCount(0);
+
+  // Journal d'audit : visible du propriétaire, pas du lecteur
+  await page.goto(dash + "/audit");
+  await expect(page.getByText("Invitation créée")).toBeVisible();
+  expect((await cp.goto(dash + "/audit"))?.status()).toBe(404);
 
   // Le lien est à usage unique
   await cp.goto(link);
@@ -82,10 +79,9 @@ test("invitation, rôles, accès et retrait d'un membre", async ({ page, browser
   await page.getByLabel("E-mail de la personne à inviter").fill(`dave-${tag}@test.dev`);
   await page.getByRole("button", { name: "Inviter" }).click();
   const link2 = await page.getByLabel("Lien d'invitation").inputValue();
-  await page.waitForTimeout(11_000);
   const e = await browser.newContext();
   const ep = await e.newPage();
-  await signup(ep, "Eve Intruse", `eve-${tag}@test.dev`);
+  await signupVerified(ep, "Eve Intruse", `eve-${tag}@test.dev`);
   await ep.waitForURL("**/onboarding");
   await ep.goto(link2);
   await ep.getByRole("button", { name: "Accepter l'invitation" }).click();

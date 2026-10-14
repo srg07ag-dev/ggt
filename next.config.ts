@@ -4,17 +4,9 @@ const config: NextConfig = {
   poweredByHeader: false,
   experimental: { serverActions: { bodySizeLimit: "11mb" } },
   serverExternalPackages: ["postgres", "pdfkit"],
+  // En-têtes de sécurité (CSP avec nonce, HSTS…) : voir src/proxy.ts. X-Frame-Options reste en filet pour les vieux navigateurs.
   async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-        ],
-      },
-    ];
+    return [{ source: "/(.*)", headers: [{ key: "X-Frame-Options", value: "DENY" }] }];
   },
 };
 

@@ -18,7 +18,7 @@ let a: { id: string }, b: { id: string };
 let contactA: { id: string }, contactB: { id: string };
 
 beforeAll(async () => {
-  await rawSql`truncate "user", company cascade`;
+  await rawSql`truncate "user", company, app_rate_limit cascade`;
   for (const id of ["alice", "bob", "viewer"]) await db.insert(schema.user).values({ id, name: id, email: `${id}@t.dev` });
   a = await createCompany("alice", { name: "Alice SARL", country: "TG", currency: "XOF" });
   b = await createCompany("bob", { name: "Bob SAS", country: "FR", currency: "EUR" });

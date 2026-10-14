@@ -18,7 +18,7 @@ const join = async (company: string, who: string, role: string) => {
 };
 
 beforeAll(async () => {
-  await rawSql`truncate "user", company cascade`;
+  await rawSql`truncate "user", company, app_rate_limit cascade`;
   for (const u of ["owner1", "owner2", "admin1", "mgr", "viewer1", "bob", "newbie", "stranger", "ghost"]) await mk(u);
   a = await createCompany("owner1", { name: "Alice SARL", country: "TG", currency: "XOF" });
   b = await createCompany("bob", { name: "Bob SAS", country: "TG", currency: "XOF" });

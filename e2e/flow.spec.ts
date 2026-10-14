@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { signupVerified } from "./helpers";
 
 test("inscription → entreprise → contact, puis isolation entre comptes", async ({ page, browser }, info) => {
   const tag = `${info.project.name}${Date.now()}`;
-  await page.goto("/signup");
-  await page.getByLabel("Nom complet").fill("Alice Test");
-  await page.getByLabel("E-mail").fill(`alice-${tag}@test.dev`);
-  await page.getByLabel("Mot de passe").fill("motdepasse-solide-1");
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  const cspViolations: string[] = [];
+  page.on("console", (m) => { if (/content security policy/i.test(m.text())) cspViolations.push(m.text()); });
+  page.on("pageerror", (e) => { if (/content security policy/i.test(e.message)) cspViolations.push(e.message); });
+  await signupVerified(page, "Alice Test", `alice-${tag}@test.dev`);
   await page.waitForURL("**/onboarding");
 
   await page.getByLabel("Nom de l'entreprise").fill("Alice SARL");
@@ -141,15 +141,10 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   await page.getByRole("button", { name: "Archiver le contact" }).click();
   await expect(page.getByText("Archivé", { exact: true })).toBeVisible();
 
-  await page.waitForTimeout(11_000);
   // Un second utilisateur ne peut pas ouvrir l'entreprise d'Alice
   const ctx2 = await browser.newContext();
   const p2 = await ctx2.newPage();
-  await p2.goto("/signup");
-  await p2.getByLabel("Nom complet").fill("Bob Test");
-  await p2.getByLabel("E-mail").fill(`bob-${tag}@test.dev`);
-  await p2.getByLabel("Mot de passe").fill("motdepasse-solide-2");
-  await p2.getByRole("button", { name: "Créer mon compte" }).click();
+  await signupVerified(p2, "Bob Test", `bob-${tag}@test.dev`);
   await p2.waitForURL("**/onboarding");
   const res = await p2.goto(dashUrl + "/contacts");
   expect(res?.status()).toBe(404);
@@ -161,4 +156,5 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   expect((await p2.request.get(attUrl)).status()).toBe(404);
   expect((await p2.request.get(dashUrl + "/exports/expenses")).status()).toBe(404);
 
+  expect(cspViolations).toEqual([]);
 });

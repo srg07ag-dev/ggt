@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, asc, eq, gt, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db/client";
+import { rateLimit } from "@/lib/rate-limit";
 import { BusinessRuleError } from "./errors";
 import { canAssignRole, canManageMember, INVITABLE_ROLES, ROLES, type Role } from "./permissions";
 import { audit, ForbiddenError, requireMembership, withTenant, type TenantContext, type TenantTx } from "./tenant";
@@ -41,6 +42,7 @@ export async function createInvitation(userId: string, companyId: string, input:
     })
     .parse(input);
   const ctx = await requireMembership(userId, companyId, "members:manage");
+  await rateLimit(`invite:${companyId}`, 30, 3600);
   if (!INVITABLE_ROLES.includes(data.role) || !canAssignRole(ctx.role, data.role)) throw new ForbiddenError("Vous ne pouvez pas attribuer ce rôle.");
 
   return withTenant(ctx, async (tx) => {
@@ -103,6 +105,7 @@ export async function previewInvitation(token: string): Promise<InvitationPrevie
  * connecté porte l'e-mail invité. L'usage unique est garanti par un UPDATE conditionnel atomique.
  */
 export async function acceptInvitation(userId: string, userEmail: string, token: string) {
+  await rateLimit(`accept:${userId}`, 10, 900); // freine les essais de jetons
   const preview = await previewInvitation(token);
   if (preview.status !== "ok") throw rule(INVALID_MESSAGES[preview.status]);
   if (preview.email !== userEmail.trim().toLowerCase()) throw rule(`Cette invitation est destinée à ${preview.email}. Connectez-vous avec cette adresse.`);

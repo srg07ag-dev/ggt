@@ -9,3 +9,5 @@ playwright-report
 e2e/*.png
 .storage
 .storage-test
+.mail-outbox
+.mail-outbox-e2e

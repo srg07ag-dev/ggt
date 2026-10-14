@@ -3,6 +3,7 @@ import { schema } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { currencyExponent } from "@/lib/money";
 import { toCsv, type Cell } from "@/lib/csv";
+import { rateLimit } from "@/lib/rate-limit";
 import { audit, requireMembership, withTenant } from "@/modules/core/tenant";
 import { listAccounts } from "./finance";
 
@@ -81,6 +82,7 @@ export type ExportKind = (typeof EXPORT_KINDS)[number];
 
 export async function buildExport(userId: string, companyId: string, kind: ExportKind, period: Period) {
   const ctx = await requireMembership(userId, companyId, "finance:read");
+  await rateLimit(`export:${userId}`, 30, 3600);
   return withTenant(ctx, async (tx) => {
     const [co] = await tx.select({ currency: schema.company.currency }).from(schema.company).where(eq(schema.company.id, companyId));
     const exp = currencyExponent(co!.currency);

@@ -9,15 +9,16 @@ npm install
 npm run db:migrate
 npm run dev
 ```
+En développement, les e-mails (vérification, mot de passe oublié) s'affichent dans la console du serveur (`EMAIL_MODE=console`).
 
 ## Vérifications
 ```bash
 npm run typecheck && npm run lint
-npm test                           # Vitest : isolation entre entreprises, permissions (base ggt_test)
-npx playwright test                # parcours e2e desktop + mobile (serveur sur :3100)
+npm test                           # Vitest : isolation, permissions, ventes, finances, membres, audit, limitation de débit (base ggt_test)
+npm run build && scripts/e2e.sh    # parcours Playwright desktop + mobile (serveur de test sur :3100, e-mails dans un fichier)
 ```
 
-## Sécurité multi-entreprises
-- Autorisations vérifiées côté serveur (`requireMembership`), rôle par entreprise.
-- Row-Level Security PostgreSQL (`FORCE`) sur les tables métier, liée à `app.company_id`.
-- Journal d'audit en ajout seul (trigger).
+## Exploitation et sécurité
+- `docs/OPERATIONS.md` : variables d'environnement, rôles PostgreSQL, sauvegardes et restauration, proxy, limites, supervision.
+- `docs/SECURITY.md` : mesures en place et limites connues avant l'ouverture publique.
+- `scripts/backup.sh`, `scripts/restore.sh`, `scripts/verify-backup.sh` : sauvegarde, restauration, exercice de restauration.

@@ -37,7 +37,7 @@ async function invoiceWith(total = "100", opts: { tax?: boolean } = { tax: true 
 }
 
 beforeAll(async () => {
-  await rawSql`truncate "user", company cascade`;
+  await rawSql`truncate "user", company, app_rate_limit cascade`;
   for (const id of ["alice", "bob", "viewer"]) await db.insert(schema.user).values({ id, name: id, email: `${id}@t.dev` });
   a = await createCompany("alice", { name: "Alice SARL", country: "FR", currency: "EUR" });
   b = await createCompany("bob", { name: "Bob SAS", country: "FR", currency: "EUR" });

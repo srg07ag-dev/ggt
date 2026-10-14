@@ -8,7 +8,7 @@ import { renderDocumentPdf } from "@/modules/sales/pdf";
 
 let companyId: string;
 beforeAll(async () => {
-  await rawSql`truncate "user", company cascade`;
+  await rawSql`truncate "user", company, app_rate_limit cascade`;
   await db.insert(schema.user).values({ id: "u", name: "u", email: "u@t.dev" });
   companyId = (await createCompany("u", { name: "Société Éclair", country: "TG", currency: "XOF" })).id;
   await setNumbering("u", companyId, "invoice", "FA-{NNNN}");

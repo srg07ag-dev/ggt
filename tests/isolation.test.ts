@@ -12,7 +12,7 @@ const mkUser = async (id: string) =>
 let a: { id: string }, b: { id: string };
 
 beforeAll(async () => {
-  await rawSql`truncate "user", company cascade`;
+  await rawSql`truncate "user", company, app_rate_limit cascade`;
   await mkUser("alice");
   await mkUser("bob");
   a = await createCompany("alice", { name: "Alice SARL", country: "TG", currency: "XOF" });
