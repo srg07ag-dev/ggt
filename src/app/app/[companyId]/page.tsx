@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Banknote, Hourglass, Kanban, ListChecks, Receipt, Users, Wallet } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -44,27 +44,31 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
         <p className="text-sm text-muted">Votre activité en un coup d&apos;œil.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Contacts actifs" value={String(counts.active)} />
+        <StatCard label="Contacts actifs" value={String(counts.active)} tone="sky" icon={Users} />
         <StatCard
           label="Pipeline ouvert"
           value={currency ? formatMoney(pipelineValue, currency) : null}
           compare={currency ? `Pondéré : ${formatMoney(weighted, currency)}` : undefined}
           emptyHint="Aucune opportunité ouverte"
           featured
+          tone="accent"
+          icon={Kanban}
         />
         <StatCard
           label="Tâches à faire"
           value={String(tasks.open)}
           delta={tasks.overdue ? `${tasks.overdue} en retard` : undefined}
           deltaTone="danger"
+          tone="amber"
+          icon={ListChecks}
         />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {can(ctx.role, "finance:read") && (
-          <StatCard label="Trésorerie disponible" value={accounts.length ? formatMoney(accounts.reduce((n, a) => n + a.balanceMinor, 0), sales.currency) : null} emptyHint="Ajoutez un compte de trésorerie" featured />
+          <StatCard label="Trésorerie disponible" value={accounts.length ? formatMoney(accounts.reduce((n, a) => n + a.balanceMinor, 0), sales.currency) : null} emptyHint="Ajoutez un compte de trésorerie" featured tone="mint" icon={Wallet} />
         )}
-        <StatCard label="Facturé TTC (net d'avoirs)" value={sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null} emptyHint="Apparaît après votre première facture émise" />
-        <StatCard label="Encaissé" value={sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null} emptyHint="Paiements enregistrés uniquement" />
+        <StatCard label="Facturé TTC (net d'avoirs)" value={sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null} emptyHint="Apparaît après votre première facture émise" tone="accent" icon={Receipt} />
+        <StatCard label="Encaissé" value={sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null} emptyHint="Paiements enregistrés uniquement" tone="mint" icon={Banknote} />
         <StatCard
           label="Créances clients"
           value={sales.invoices ? formatMoney(sales.outstandingMinor, sales.currency) : null}
@@ -72,6 +76,8 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
           deltaTone="danger"
           compare={sales.overdueMinor ? `Dont en retard : ${formatMoney(sales.overdueMinor, sales.currency)}` : undefined}
           emptyHint="Aucune facture émise"
+          tone="coral"
+          icon={Hourglass}
         />
       </div>
       <div className="grid gap-4">

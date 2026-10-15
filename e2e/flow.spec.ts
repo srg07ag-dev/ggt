@@ -102,6 +102,7 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   await page.screenshot({ path: `e2e/shot-invoice-${info.project.name}.png`, fullPage: true });
   await page.goto(dashUrl);
   await expect(page.getByText("Créances clients")).toBeVisible();
+  await page.screenshot({ path: `e2e/shot-dashboard-full-${info.project.name}.png`, fullPage: true });
 
   // Dépense avec justificatif, téléchargement protégé, rapport et export
   await page.goto(dashUrl + "/expenses");

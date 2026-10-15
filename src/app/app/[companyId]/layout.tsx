@@ -4,6 +4,7 @@ import { CreditCard, BarChart3, BookOpen, Calculator, FileSpreadsheet, Landmark 
 import { can, ROLE_LABELS } from "@/modules/core/permissions";
 import { loadAccess, type Module } from "@/modules/core/entitlements";
 import { SignOutButton } from "@/components/sign-out";
+import { NavLink } from "@/components/nav-link";
 import { requireUser } from "@/lib/session";
 import { listCompaniesForUser } from "@/modules/core/companies";
 import { ForbiddenError, requireMembership } from "@/modules/core/tenant";
@@ -86,38 +87,34 @@ export default async function CompanyLayout({
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[248px_1fr]">
-      <aside className="border-b border-border bg-surface p-4 md:border-b-0 md:border-r">
-        <div className="mb-6 px-2 text-base font-semibold tracking-tight">GGT</div>
+      <aside className="side-bg p-4 text-white">
+        <div className="mb-6 flex items-center gap-2.5 px-2"><span className="grid size-8 place-items-center rounded-xl bg-gradient-to-br from-mint to-sky text-sm font-bold text-white">G</span><span className="text-base font-semibold tracking-tight">GGT</span></div>
         <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {groups.map((g, i) => (
             <div key={i} className="flex gap-1 md:flex-col">
-              {g.title && <p className="hidden px-3 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-muted md:block">{g.title}</p>}
+              {g.title && <p className="hidden px-3 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-white/45 md:block">{g.title}</p>}
               {g.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3 text-sm text-muted hover:bg-accent-soft hover:text-text"
-                >
+                <NavLink key={item.href} href={item.href} root={item.href === b}>
                   <item.icon className="size-4" aria-hidden />
                   {item.label}
-                </Link>
+                </NavLink>
               ))}
             </div>
           ))}
         </nav>
         <div className="mt-6 hidden md:block">
-          <p className="px-2.5 pb-2 text-xs font-medium uppercase tracking-wide text-muted">Entreprises</p>
+          <p className="px-2.5 pb-2 text-xs font-medium uppercase tracking-wide text-white/45">Entreprises</p>
           {companies.map((c) => (
             <Link
               key={c.id}
               href={`/app/${c.id}`}
               aria-current={c.id === companyId ? "page" : undefined}
-              className="block truncate rounded-[var(--radius-sm)] px-2.5 py-1.5 text-sm hover:bg-surface-2 aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent"
+              className="block truncate rounded-[var(--radius-sm)] px-2.5 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white aria-[current=page]:bg-white/15 aria-[current=page]:text-white"
             >
               {c.name}
             </Link>
           ))}
-          <Link href="/onboarding" className="mt-1 flex items-center gap-2 px-2.5 py-1.5 text-sm text-muted hover:text-text">
+          <Link href="/onboarding" className="mt-1 flex items-center gap-2 px-2.5 py-1.5 text-sm text-white/60 hover:text-white">
             <Plus className="size-4" aria-hidden /> Nouvelle entreprise
           </Link>
         </div>
