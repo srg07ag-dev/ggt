@@ -24,11 +24,14 @@ export function proxy(request: NextRequest) {
   ].join("; ");
 
   const headers = new Headers(request.headers);
+  const requestId = request.headers.get("x-request-id")?.match(/^[\w-]{8,64}$/)?.[0] ?? crypto.randomUUID();
   headers.set("x-nonce", nonce);
+  headers.set("x-request-id", requestId);
   headers.set("content-security-policy", csp);
 
   const res = NextResponse.next({ request: { headers } });
   res.headers.set("content-security-policy", csp);
+  res.headers.set("x-request-id", requestId);
   res.headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()");
   res.headers.set("cross-origin-opener-policy", "same-origin");
   res.headers.set("x-content-type-options", "nosniff");

@@ -7,6 +7,7 @@ import { db, schema } from "@/db/client";
 import { getConfig } from "./config";
 import { rateLimit, RateLimitError } from "./rate-limit";
 import { mails, sendMail } from "./mailer";
+import { log } from "./log";
 
 const cfg = getConfig();
 
@@ -24,7 +25,7 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       // pas d'await : le temps de réponse ne doit pas révéler si le compte existe
-      void sendMail(mails.reset(user.email, url)).catch((e) => console.error("Échec d'envoi (reset)", e instanceof Error ? e.message : e));
+      void sendMail(mails.reset(user.email, url)).catch((e) => log("error", "mail.reset_failed", { message: e instanceof Error ? e.message : String(e) }));
     },
   },
   emailVerification: {
@@ -33,7 +34,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: 60 * 60,
     sendVerificationEmail: async ({ user, url }) => {
-      void sendMail(mails.verify(user.email, url)).catch((e) => console.error("Échec d'envoi (vérification)", e instanceof Error ? e.message : e));
+      void sendMail(mails.verify(user.email, url)).catch((e) => log("error", "mail.verify_failed", { message: e instanceof Error ? e.message : String(e) }));
     },
   },
   user: {

@@ -1,0 +1,44 @@
+name: CI
+on:
+  push: { branches: [main, "claude/**"] }
+  pull_request:
+permissions: { contents: read }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: ggt, POSTGRES_PASSWORD: ggt, POSTGRES_DB: ggt_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ggt" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://ggt:ggt@localhost:5432/ggt_test
+      BETTER_AUTH_SECRET: ci-only-secret-ci-only-secret-ci-only-1234
+      BETTER_AUTH_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run db:migrate
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: scripts/e2e.sh
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: "test-results/", retention-days: 7 }
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high

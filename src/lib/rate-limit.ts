@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
+import { securityEvent } from "./log";
 
 export class RateLimitError extends Error {
   constructor(public retryAfterSeconds: number) {
@@ -22,6 +23,7 @@ export async function rateLimit(key: string, limit: number, windowSeconds: numbe
   const row = rows[0]!;
   if (row.count > limit) {
     const elapsed = (Date.now() - new Date(row.window_start).getTime()) / 1000;
+    securityEvent("rate_limited", { bucket: key.split(":")[0] });
     throw new RateLimitError(Math.max(1, Math.ceil(windowSeconds - elapsed)));
   }
   // nettoyage opportuniste des compteurs périmés (1 requête sur 200)

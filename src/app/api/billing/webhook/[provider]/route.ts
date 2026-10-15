@@ -1,3 +1,4 @@
+import { securityEvent } from "@/lib/log";
 import { verifyWebhook, processWebhookEvent } from "@/modules/billing/webhook";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ provide
   if (!secret) return new Response("Introuvable", { status: 404 }); // prestataire non configuré
   const raw = await req.text();
   if (raw.length > 100_000) return new Response("Trop volumineux", { status: 413 });
-  if (!verifyWebhook(secret, raw, req.headers.get("x-signature"))) return new Response("Signature invalide", { status: 401 });
+  if (!verifyWebhook(secret, raw, req.headers.get("x-signature"))) {
+    securityEvent("webhook_bad_signature", { provider });
+    return new Response("Signature invalide", { status: 401 });
+  }
   let json: unknown;
   try {
     json = JSON.parse(raw);

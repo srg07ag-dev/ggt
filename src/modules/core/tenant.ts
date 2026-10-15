@@ -1,4 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
+import { securityEvent } from "@/lib/log";
 import { db, schema, type Db } from "@/db/client";
 import { checkPermissionAgainstPlan, loadAccess } from "./entitlements";
 import { can, type Permission, type Role } from "./permissions";
@@ -33,7 +34,10 @@ export async function requireMembership(
     .from(schema.membership)
     .where(and(eq(schema.membership.userId, userId), eq(schema.membership.companyId, companyId)))
     .limit(1);
-  if (!row || (permission && !can(row.role, permission))) throw new ForbiddenError();
+  if (!row || (permission && !can(row.role, permission))) {
+    securityEvent("forbidden", { companyId, permission, member: !!row });
+    throw new ForbiddenError();
+  }
   // l'abonnement s'applique après les droits : module inclus, pas d'écriture en lecture seule
   if (permission) checkPermissionAgainstPlan(await loadAccess(companyId), permission, companyId);
   return { userId, companyId, role: row.role };
