@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CreditCard, BarChart3, BookOpen, Calculator, FileSpreadsheet, Landmark as Bank, Scale, ScrollText, Settings2, CalendarClock, Layers, UserCog, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Settings, Truck, Users } from "lucide-react";
+import { CreditCard, BarChart3, BookOpen, Calculator, FileSpreadsheet, Landmark as Bank, Scale, ScrollText, Settings2, CalendarClock, Layers, UserCog, CheckSquare, FilePlus2, FileText, HandCoins, Kanban, Landmark, LayoutDashboard, Package, Plus, Receipt, Search, Settings, Truck, Users } from "lucide-react";
 import { can, ROLE_LABELS } from "@/modules/core/permissions";
 import { loadAccess, type Module } from "@/modules/core/entitlements";
 import { SignOutButton } from "@/components/sign-out";
@@ -86,55 +86,73 @@ export default async function CompanyLayout({
   ];
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[248px_1fr]">
-      <aside className="border-b border-border bg-surface-2 p-3 md:sticky md:top-0 md:h-dvh md:overflow-y-auto md:border-b-0 md:border-r">
-        <div className="mb-4 px-2.5 text-[15px] font-semibold tracking-tight">GGT</div>
-        <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
-          {groups.map((g, i) => (
-            <div key={i} className="flex shrink-0 gap-1 md:flex-col">
-              {g.title && <p className="hidden px-2.5 pb-1 pt-5 text-[11px] font-semibold text-muted md:block">{g.title}</p>}
-              {g.items.map((item) => (
-                <NavLink key={item.href} href={item.href} root={item.href === b}>
-                  <item.icon className="size-4 text-muted" strokeWidth={1.75} aria-hidden />
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          ))}
-        </nav>
-        <div className="mt-6 hidden md:block">
-          <p className="px-2.5 pb-1 text-[11px] font-semibold text-muted">Entreprises</p>
-          {companies.map((c) => (
-            <Link
-              key={c.id}
-              href={`/app/${c.id}`}
-              aria-current={c.id === companyId ? "page" : undefined}
-              className="block truncate rounded-[var(--radius-sm)] px-2.5 py-1.5 text-[13px] text-text/80 hover:bg-black/[0.04] aria-[current=page]:bg-black/[0.07] aria-[current=page]:font-semibold aria-[current=page]:text-text dark:hover:bg-white/[0.08] dark:aria-[current=page]:bg-white/[0.12]"
-            >
-              {c.name}
+    <div className="min-h-dvh bg-bg">
+      <header className="flex h-16 items-center gap-4 px-4 md:px-6">
+        <Link href={b} className="text-xl font-medium tracking-tight">GGT</Link>
+        <form action={`${b}/contacts`} role="search" className="relative mx-auto hidden w-full max-w-xl md:block">
+          <Search className="absolute left-4 top-3 size-5 text-muted" aria-hidden />
+          <input
+            name="q"
+            aria-label="Recherche rapide de contact"
+            placeholder="Rechercher un contact"
+            className="h-11 w-full rounded-[var(--radius)] bg-surface-2 pl-12 pr-4 text-sm placeholder:text-muted hover:brightness-95 focus:bg-surface focus:outline-2 focus:outline-accent"
+          />
+        </form>
+        <span className="ml-auto flex items-center gap-4 text-sm md:ml-0">
+          <span className="hidden max-w-40 truncate text-muted lg:inline">{current?.name}</span>
+          <span className="hidden sm:inline">{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span>
+          <span className="text-xs text-muted sm:hidden">{ROLE_LABELS[membership.role]}</span>
+          <Link href="/account/security" className="text-muted hover:text-text">Sécurité</Link>
+          <SignOutButton />
+        </span>
+      </header>
+      <div className="md:grid md:grid-cols-[256px_1fr]">
+        <aside className="px-3 pb-2 md:sticky md:top-0 md:h-[calc(100dvh-4rem)] md:self-start md:overflow-y-auto md:pb-6">
+          <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+            {groups.map((g, i) => (
+              <div key={i} className="flex shrink-0 gap-1 md:flex-col">
+                {g.title && <p className="hidden px-3 pb-1 pt-5 text-xs font-medium text-muted md:block">{g.title}</p>}
+                {g.items.map((item) => (
+                  <NavLink key={item.href} href={item.href} root={item.href === b}>
+                    <item.icon className="size-5" strokeWidth={1.75} aria-hidden />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            ))}
+          </nav>
+          <div className="mt-6 hidden md:block">
+            <p className="px-3 pb-1 text-xs font-medium text-muted">Entreprises</p>
+            {companies.map((c) => (
+              <Link
+                key={c.id}
+                href={`/app/${c.id}`}
+                aria-current={c.id === companyId ? "page" : undefined}
+                className="block truncate rounded-[var(--radius)] px-3 py-2 text-sm hover:bg-surface-2 aria-[current=page]:bg-accent-soft aria-[current=page]:font-medium aria-[current=page]:text-on-accent-soft"
+              >
+                {c.name}
+              </Link>
+            ))}
+            <Link href="/onboarding" className="mt-1 flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm text-muted hover:bg-surface-2 hover:text-text">
+              <Plus className="size-5" aria-hidden /> Nouvelle entreprise
             </Link>
-          ))}
-          <Link href="/onboarding" className="mt-1 flex items-center gap-2 px-2.5 py-1.5 text-[13px] text-muted hover:text-text">
-            <Plus className="size-4" aria-hidden /> Nouvelle entreprise
-          </Link>
-        </div>
-      </aside>
-      <div className="min-w-0">
-        <header className="flex h-12 items-center justify-between border-b border-border px-4 md:px-8">
-          <span className="text-sm text-muted">{current?.name}</span>
-          <span className="flex items-center gap-4 text-sm"><span className="hidden sm:inline">{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span><span className="sm:hidden text-xs text-muted">{ROLE_LABELS[membership.role]}</span><Link href="/account/security" className="text-muted hover:text-text">Sécurité</Link><SignOutButton /></span>
-        </header>
-        {(access.readOnly || access.warn) && (
-          <div role="status" className={`px-4 py-2.5 text-center text-sm md:px-8 ${access.readOnly ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"}`}>
-            {access.state === "suspended" && "Ce compte est suspendu : l'entreprise est en lecture seule."}
-            {access.state === "expired" && "Votre abonnement a expiré : l'entreprise est en lecture seule (données consultables et exportables)."}
-            {access.warn === "trial_ending" && "Votre période d'essai se termine bientôt."}
-            {access.warn === "grace" && "Paiement en retard : l'accès sera limité à la fin du délai de grâce."}
-            {access.warn === "canceling" && "Votre abonnement est résilié : il prendra fin à la fin de la période payée."}
-            {can(membership.role, "company:manage") && <> <Link href={`/app/${companyId}/billing`} className="font-medium underline">Gérer l&apos;abonnement</Link></>}
           </div>
-        )}
-        <main className="mx-auto max-w-5xl px-4 py-8 md:px-8">{children}</main>
+        </aside>
+        <div className="min-w-0 md:pr-4 md:pb-4">
+          {(access.readOnly || access.warn) && (
+            <div role="status" className={`mb-2 px-4 py-2.5 text-center text-sm md:rounded-[var(--radius)] md:px-8 ${access.readOnly ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"}`}>
+              {access.state === "suspended" && "Ce compte est suspendu : l'entreprise est en lecture seule."}
+              {access.state === "expired" && "Votre abonnement a expiré : l'entreprise est en lecture seule (données consultables et exportables)."}
+              {access.warn === "trial_ending" && "Votre période d'essai se termine bientôt."}
+              {access.warn === "grace" && "Paiement en retard : l'accès sera limité à la fin du délai de grâce."}
+              {access.warn === "canceling" && "Votre abonnement est résilié : il prendra fin à la fin de la période payée."}
+              {can(membership.role, "company:manage") && <> <Link href={`/app/${companyId}/billing`} className="font-medium underline">Gérer l&apos;abonnement</Link></>}
+            </div>
+          )}
+          <main className="min-h-[calc(100dvh-5rem)] bg-surface px-4 py-8 md:rounded-[var(--radius)] md:px-10">
+            <div className="mx-auto max-w-5xl">{children}</div>
+          </main>
+        </div>
       </div>
     </div>
   );

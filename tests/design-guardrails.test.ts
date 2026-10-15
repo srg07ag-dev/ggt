@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Garde-fous du système visuel : neutre, net, typographique (voir src/app/globals.css).
+ * Garde-fous du système visuel : Material Design 3 à la Google, sobre et net (voir src/app/globals.css).
  * Ils empêchent le retour du style « SaaS générique » : dégradés, ombres, violets/indigos par défaut,
  * palettes Tailwind nommées, coins très arrondis.
  */

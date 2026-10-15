@@ -21,7 +21,7 @@ export function Field({
         className={clsx(
           "h-10 w-full rounded-[var(--radius-sm)] border bg-surface px-3 text-sm placeholder:text-muted",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          error ? "border-danger" : "border-border-strong hover:border-muted",
+          error ? "border-danger" : "border-border-strong ",
           className,
         )}
       />

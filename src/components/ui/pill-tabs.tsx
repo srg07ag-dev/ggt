@@ -18,8 +18,8 @@ export function PillTabs({ tabs, label }: { tabs: PillTab[]; label: string }) {
           href={t.href}
           aria-current={t.active ? "page" : undefined}
           className={clsx(
-            "-mb-px inline-flex h-10 items-center gap-1.5 border-b-2 text-sm transition-colors",
-            t.active ? "border-text font-medium text-text" : "border-transparent text-muted hover:text-text",
+            "-mb-px inline-flex h-12 items-center gap-1.5 border-b-[3px] px-1 text-sm transition-colors",
+            t.active ? "border-accent font-medium text-accent" : "border-transparent text-muted hover:bg-surface-2 hover:text-text",
           )}
         >
           {t.label}

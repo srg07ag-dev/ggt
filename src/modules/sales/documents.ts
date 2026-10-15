@@ -472,3 +472,37 @@ export async function salesSummary(userId: string, companyId: string) {
     };
   });
 }
+
+/**
+ * Activité des `months` derniers mois (mois en cours inclus) : facturé net d'avoirs (documents émis, par date d'émission)
+ * et encaissé (paiements non annulés, par date de paiement). Mois sans mouvement = 0. Jamais d'estimation.
+ */
+export async function monthlyActivity(userId: string, companyId: string, months = 6) {
+  const n = Math.min(Math.max(Math.trunc(months), 1), 24);
+  const ctx = await requireMembership(userId, companyId, "sales:read");
+  return withTenant(ctx, async (tx) => {
+    const co = await companyInfo(tx, companyId);
+    const [y, m] = todayIn(co.timezone).split("-").map(Number) as [number, number];
+    const keys: string[] = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(Date.UTC(y, m - 1 - i, 1));
+      keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+    }
+    const start = `${keys[0]}-01`;
+    const inv = await tx.execute<{ ym: string; v: number }>(sql`
+      select to_char(issue_date, 'YYYY-MM') as ym,
+             sum(case when type = 'invoice' then total_minor else -total_minor end)::float8 as v
+      from sales_document where status = 'issued' and type in ('invoice', 'credit_note') and issue_date >= ${start}::date
+      group by 1`);
+    const pay = await tx.execute<{ ym: string; v: number }>(sql`
+      select to_char(paid_on, 'YYYY-MM') as ym, sum(amount_minor)::float8 as v
+      from payment where voided_at is null and paid_on >= ${start}::date
+      group by 1`);
+    const invMap = new Map(inv.map((r) => [r.ym, Number(r.v)]));
+    const payMap = new Map(pay.map((r) => [r.ym, Number(r.v)]));
+    return {
+      currency: co.currency,
+      months: keys.map((ym) => ({ month: ym, invoicedMinor: invMap.get(ym) ?? 0, receivedMinor: payMap.get(ym) ?? 0 })),
+    };
+  });
+}

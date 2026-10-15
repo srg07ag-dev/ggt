@@ -7,7 +7,8 @@ import { countOpenActivities } from "@/modules/crm/activities";
 import { countContactsByState } from "@/modules/crm/contacts";
 import { listOpportunities, listStages } from "@/modules/crm/pipeline";
 import { formatMoney } from "@/lib/money";
-import { salesSummary } from "@/modules/sales/documents";
+import { monthlyActivity, salesSummary } from "@/modules/sales/documents";
+import { MonthlyChart } from "@/components/monthly-chart";
 import { can } from "@/modules/core/permissions";
 import { requireMembership } from "@/modules/core/tenant";
 import { listAccounts } from "@/modules/finance/finance";
@@ -24,12 +25,13 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
   const ctx = await requireMembership(user.id, companyId);
   const taxDue = can(ctx.role, "tax:read") ? await upcomingObligations(user.id, companyId, 4) : null;
   const accounts = can(ctx.role, "finance:read") ? (await listAccounts(user.id, companyId)).filter((a) => !a.archived) : [];
-  const [counts, tasks, opps, stages, sales] = await Promise.all([
+  const [counts, tasks, opps, stages, sales, activity] = await Promise.all([
     countContactsByState(user.id, companyId),
     countOpenActivities(user.id, companyId),
     listOpportunities(user.id, companyId),
     listStages(user.id, companyId),
     salesSummary(user.id, companyId),
+    monthlyActivity(user.id, companyId, 6),
   ]);
   const openStageIds = new Set(stages.filter((s) => s.kind === "open").map((s) => s.id));
   const open = opps.filter((o) => openStageIds.has(o.stageId));
@@ -43,7 +45,7 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
         <h1>Vue d&apos;ensemble</h1>
         <p className="text-sm text-muted">Votre activité en un coup d&apos;œil.</p>
       </div>
-      <div className="grid gap-x-8 gap-y-8 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         <StatCard label="Contacts actifs" value={String(counts.active)}  />
         <StatCard
           label="Pipeline ouvert"
@@ -59,7 +61,7 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
           deltaTone="danger" 
         />
       </div>
-      <div className="grid gap-x-8 gap-y-8 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         {can(ctx.role, "finance:read") && (
           <StatCard label="Trésorerie disponible" value={accounts.length ? formatMoney(accounts.reduce((n, a) => n + a.balanceMinor, 0), sales.currency) : null} emptyHint="Ajoutez un compte de trésorerie" featured  />
         )}
@@ -70,10 +72,15 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
           value={sales.invoices ? formatMoney(sales.outstandingMinor, sales.currency) : null}
           delta={sales.overdueCount ? `${sales.overdueCount} en retard` : undefined}
           deltaTone="danger"
+          tone={sales.overdueCount ? "danger" : "neutral"}
           compare={sales.overdueMinor ? `Dont en retard : ${formatMoney(sales.overdueMinor, sales.currency)}` : undefined}
           emptyHint="Aucune facture émise" 
         />
       </div>
+      <Card>
+        <CardTitle hint="Factures émises nettes d'avoirs et paiements enregistrés, par mois">Facturé et encaissé</CardTitle>
+        <MonthlyChart months={activity.months} currency={activity.currency} />
+      </Card>
       <div className="grid gap-4">
         <Card>
           <CardTitle hint="Contacts actifs de cette entreprise">Clients et prospects</CardTitle>
