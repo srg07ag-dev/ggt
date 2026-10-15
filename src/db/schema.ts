@@ -369,6 +369,7 @@ export const salesDocument = pgTable(
   },
   (t) => [
     index("sales_document_idx").on(t.companyId, t.type, t.status),
+    index("sales_document_related_idx").on(t.companyId, t.relatedId),
     unique("sales_document_company_id_id").on(t.companyId, t.id),
     unique("sales_document_number").on(t.companyId, t.type, t.number),
     foreignKey({ columns: [t.companyId, t.contactId], foreignColumns: [contact.companyId, contact.id] }),

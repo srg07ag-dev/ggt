@@ -1,0 +1,1 @@
+CREATE INDEX "sales_document_related_idx" ON "sales_document" USING btree ("company_id","related_id");
