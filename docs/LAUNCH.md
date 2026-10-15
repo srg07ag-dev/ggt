@@ -23,7 +23,7 @@ Rien ci-dessous ne doit être coché « fait » sans l'avoir réellement exécut
 1. **Base** : PostgreSQL 16 managé avec sauvegardes et PITR. Créer les rôles avec `scripts/db-roles.sql`, migrer avec `ggt_owner` (`docker build --target tools`, `npm run db:migrate`), puis faire tourner l'application avec `ggt_app` (sans `BYPASSRLS`). **Vérifier qu'aucune requête applicative ne tourne avec le propriétaire** : la RLS ne protège que le rôle restreint.
 2. **Secrets** : dans le gestionnaire de secrets de l'hébergeur, jamais dans le dépôt ni l'image : `BETTER_AUTH_SECRET`, `DATABASE_URL`, `SMTP_URL`, secrets de webhook de paiement.
 3. **TLS et proxy** : HTTPS obligatoire (`BETTER_AUTH_URL` en https, sinon l'application refuse de démarrer). Le proxy doit **écraser** `X-Forwarded-For` (voir `docs/OPERATIONS.md` §4).
-4. **E-mail** : fournisseur SMTP choisi, domaine d'envoi avec SPF, DKIM et DMARC. Tester vérification d'adresse et mot de passe oublié de bout en bout.
+4. **E-mail** (voir `docs/INTEGRATIONS.md`, `scripts/smtp-check.ts`) : fournisseur SMTP choisi, domaine d'envoi avec SPF, DKIM et DMARC. Tester vérification d'adresse et mot de passe oublié de bout en bout.
 5. **Stockage des justificatifs** : volume persistant sauvegardé (ou stockage objet à brancher, ce qui est un développement à prévoir).
 6. **Sauvegardes** : planifier `scripts/backup.sh`, copier hors site, et **faire un exercice de restauration** avec `scripts/verify-backup.sh` avant l'ouverture, puis chaque trimestre.
 7. **Premier administrateur de plateforme** : `npx tsx scripts/make-admin.ts <email>` puis activer son 2FA (obligatoire pour la console).
