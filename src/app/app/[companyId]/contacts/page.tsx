@@ -41,7 +41,7 @@ async function Contacts({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Contacts</h1>
-      {canWrite && <details className="group rounded-[var(--radius-lg)] border border-border bg-surface">
+      {canWrite && <details className="group border-y border-border">
         <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouveau contact</summary>
         <div className="border-t border-border p-5"><ContactForm companyId={companyId} parents={parents} /></div>
       </details>}
@@ -61,7 +61,7 @@ async function Contacts({
             defaultValue={sp.q}
             placeholder="Rechercher un contact"
             aria-label="Rechercher un contact"
-            className="h-10 w-full rounded-full border border-border-strong bg-surface pl-9 pr-4 text-sm md:w-72"
+            className="h-10 w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface pl-9 pr-4 text-sm md:w-72"
           />
           {archived && <input type="hidden" name="archived" value="1" />}
         </form>
@@ -82,7 +82,7 @@ async function Contacts({
           description="Ajoutez un contact ou modifiez vos filtres."
         />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface">
+        <div className="overflow-x-auto border-y border-border">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted">
               <tr>

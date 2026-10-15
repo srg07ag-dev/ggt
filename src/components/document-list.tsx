@@ -10,7 +10,7 @@ type Rows = Awaited<ReturnType<typeof listDocuments>>;
 export function DocumentList({ companyId, rows, empty }: { companyId: string; rows: Rows; empty: string }) {
   if (rows.length === 0) return <EmptyState icon={<FileText className="size-6" />} title="Aucun document" description={empty} />;
   return (
-    <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface">
+    <div className="overflow-x-auto border-y border-border">
       <table className="w-full text-sm">
         <thead className="border-b border-border text-left text-xs text-muted">
           <tr>

@@ -23,7 +23,7 @@ async function Suppliers({ params }: { params: Promise<{ companyId: string }> })
       {rows.length === 0 ? (
         <EmptyState icon={<Truck className="size-6" />} title="Aucun fournisseur" description="Ajoutez vos fournisseurs pour les associer à vos dépenses." />
       ) : (
-        <ul className="divide-y divide-border rounded-[var(--radius-lg)] border border-border bg-surface">
+        <ul className="divide-y divide-border border-y border-border">
           {rows.map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
               <span><span className="font-medium">{s.name}</span><span className="block text-xs text-muted">{[s.email, s.phone, s.taxId].filter(Boolean).join(" · ")}</span></span>

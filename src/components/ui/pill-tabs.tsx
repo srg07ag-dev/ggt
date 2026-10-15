@@ -8,28 +8,22 @@ export interface PillTab {
   active?: boolean;
 }
 
-/** Onglets en pilules (navigation interne d'une page ou filtres de liste). */
+/** Onglets soulignés (navigation interne d'une page ou filtres de liste). */
 export function PillTabs({ tabs, label }: { tabs: PillTab[]; label: string }) {
   return (
-    <nav aria-label={label} className="flex flex-wrap gap-2">
+    <nav aria-label={label} className="flex flex-wrap gap-x-6 border-b border-border">
       {tabs.map((t) => (
         <Link
           key={t.href}
           href={t.href}
           aria-current={t.active ? "page" : undefined}
           className={clsx(
-            "inline-flex h-9 items-center gap-2 rounded-full border px-4 text-sm transition-colors",
-            t.active
-              ? "border-accent bg-surface font-medium text-text"
-              : "border-border text-muted hover:border-border-strong hover:text-text",
+            "-mb-px inline-flex h-10 items-center gap-1.5 border-b-2 text-sm transition-colors",
+            t.active ? "border-text font-medium text-text" : "border-transparent text-muted hover:text-text",
           )}
         >
           {t.label}
-          {t.count !== undefined && (
-            <span className="num inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-soft px-1.5 text-xs font-medium text-accent">
-              {t.count}
-            </span>
-          )}
+          {t.count !== undefined && <span className="num text-xs text-muted">{t.count}</span>}
         </Link>
       ))}
     </nav>

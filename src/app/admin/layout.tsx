@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex flex-wrap items-center gap-5">
           <span className="font-semibold tracking-tight">GGT · Administration</span>
           <nav aria-label="Administration" className="flex flex-wrap gap-1">
-            {nav.map(([href, label]) => <Link key={href} href={href} className="rounded-full px-3 py-1.5 text-sm text-muted hover:bg-accent-soft hover:text-text">{label}</Link>)}
+            {nav.map(([href, label]) => <Link key={href} href={href} className="rounded-[var(--radius-sm)] px-3 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-text">{label}</Link>)}
           </nav>
         </div>
         <span className="flex items-center gap-4 text-sm"><span className="text-muted">{session.user.email}</span><SignOutButton /></span>

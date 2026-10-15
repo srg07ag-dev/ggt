@@ -8,7 +8,7 @@ type Rows = Awaited<ReturnType<typeof listEntries>>;
 
 export function EntryList({ companyId, rows, currency, partyLabel }: { companyId: string; rows: Rows; currency: string; partyLabel: string }) {
   return (
-    <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface">
+    <div className="overflow-x-auto border-y border-border">
       <table className="w-full text-sm">
         <thead className="border-b border-border text-left text-xs text-muted">
           <tr>

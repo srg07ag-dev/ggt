@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT=3100
+# un ancien serveur resté actif servirait un ancien build (styles et pages périmés) : on refuse de continuer
+if curl -s -o /dev/null "http://localhost:$PORT/login"; then echo "Le port $PORT est déjà utilisé : arrêtez l'ancien serveur de test avant de relancer." >&2; exit 1; fi
 rm -rf .mail-outbox-e2e
 # les compteurs de limitation sont en base : on les remet à zéro pour que deux exécutions rapprochées ne se gênent pas
 DB_URL="${DATABASE_URL:-$(grep -E '^DATABASE_URL=' .env.local | cut -d= -f2-)}"
@@ -13,6 +15,7 @@ ALLOW_INSECURE_TEST_CONFIG=true BETTER_AUTH_URL="http://localhost:$PORT" EMAIL_M
   MAIL_OUTBOX_DIR=.mail-outbox-e2e REQUIRE_EMAIL_VERIFICATION=true \
   npx next start -p "$PORT" > /tmp/e2e-server.log 2>&1 &
 SERVER=$!
-trap 'kill $SERVER 2>/dev/null || true' EXIT
+# next lance un processus enfant (next-server) : on arrête aussi les enfants, sinon il resterait actif et servirait un ancien build
+trap 'pkill -P $SERVER 2>/dev/null || true; kill $SERVER 2>/dev/null || true; pkill -f '^next-server'  2>/dev/null || true' EXIT
 for _ in $(seq 1 40); do curl -sf "http://localhost:$PORT/login" > /dev/null && break; sleep 0.5; done
 npx playwright test "$@"

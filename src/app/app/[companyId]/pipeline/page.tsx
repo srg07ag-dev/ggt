@@ -43,10 +43,10 @@ async function Pipeline({
   const Move = ({ id, stageId }: { id: string; stageId: string }) =>
     canWrite ? (
       <form action={moveOpportunityAction.bind(null, companyId, id)} className="flex gap-1">
-        <select name="stageId" defaultValue={stageId} aria-label="Étape" className="h-8 min-w-0 flex-1 rounded-full border border-border bg-surface px-2 text-xs">
+        <select name="stageId" defaultValue={stageId} aria-label="Étape" className="h-8 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-border bg-surface px-2 text-xs">
           {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <button className="h-8 rounded-full border border-border-strong px-3 text-xs hover:bg-accent-soft">OK</button>
+        <button className="h-8 rounded-[var(--radius-sm)] border border-border-strong px-3 text-xs hover:bg-surface-2">OK</button>
       </form>
     ) : null;
 
@@ -54,7 +54,7 @@ async function Pipeline({
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Pipeline commercial</h1>
       {canWrite && contacts.length > 0 && (
-        <details className="rounded-[var(--radius-lg)] border border-border bg-surface">
+        <details className="border-y border-border">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouvelle opportunité</summary>
           <div className="border-t border-border p-5"><OpportunityForm companyId={companyId} currency={currency} contacts={contacts} /></div>
         </details>
@@ -72,7 +72,7 @@ async function Pipeline({
           action={contacts.length === 0 ? <Link className="text-sm font-medium text-accent" href={`/app/${companyId}/contacts`}>Ajouter un contact</Link> : undefined}
         />
       ) : table ? (
-        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface">
+        <div className="overflow-x-auto border-y border-border">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted">
               <tr>{["Opportunité", "Client", "Étape", "Montant", "Probabilité", "Clôture"].map((h) => <th key={h} className="px-4 py-3 font-medium">{h}</th>)}</tr>
@@ -102,7 +102,7 @@ async function Pipeline({
             return (
               <section key={s.id} aria-label={s.name} className="w-64 shrink-0 space-y-3 rounded-[var(--radius-lg)] bg-surface-2 p-3">
                 <header className="flex items-center justify-between px-1">
-                  <h2 className="text-sm font-semibold">{s.name}</h2>
+                  <h3>{s.name}</h3>
                   <span className="num text-xs text-muted">{col.length}</span>
                 </header>
                 <p className="num px-1 text-xs text-muted">{fmt(total)}</p>

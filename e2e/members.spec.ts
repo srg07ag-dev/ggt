@@ -37,7 +37,7 @@ test("invitation, rôles, accès et retrait d'un membre", async ({ page, browser
   await cp.waitForURL(/\/invite\//);
   await cp.getByRole("button", { name: "Accepter l'invitation" }).click();
   await cp.waitForURL(dash);
-  await expect(cp.locator("header.h-14")).toContainText("Lecteur"); // le rôle figure dans l'en-tête (version mobile ou desktop)
+  await expect(cp.getByRole("banner")).toContainText("Lecteur"); // le rôle figure dans l'en-tête (version mobile ou desktop)
   await expect(cp.getByRole("link", { name: "Recettes" })).toBeVisible(); // un lecteur a accès en lecture aux finances
   await cp.goto(dash + "/contacts");
   await expect(cp.getByText("+ Nouveau contact")).toHaveCount(0); // pas d'écriture pour un lecteur

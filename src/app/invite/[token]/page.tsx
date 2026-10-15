@@ -22,7 +22,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-5 rounded-[var(--radius-lg)] border border-border bg-surface p-6">
+      <div className="w-full max-w-md space-y-5 border-y border-border p-6">
         {preview.status !== "ok" ? (
           <>
             <h1 className="text-xl font-semibold tracking-tight">Invitation indisponible</h1>

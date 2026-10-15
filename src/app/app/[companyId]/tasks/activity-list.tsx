@@ -10,7 +10,7 @@ const PRIORITY = { low: ["neutral", "Basse"], normal: ["accent", "Normale"], hig
 export function ActivityList({ companyId, rows, canWrite }: { companyId: string; rows: Row[]; canWrite: boolean }) {
   const fmt = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" });
   return (
-    <ul className="divide-y divide-border rounded-[var(--radius-lg)] border border-border bg-surface">
+    <ul className="divide-y divide-border border-y border-border">
       {rows.map((r) => {
         const overdue = r.status === "todo" && r.dueAt && r.dueAt < new Date();
         const done = r.status === "done";
@@ -20,7 +20,7 @@ export function ActivityList({ companyId, rows, canWrite }: { companyId: string;
               <form action={setActivityStatusAction.bind(null, companyId, r.id, done ? "todo" : "done")}>
                 <button
                   aria-label={done ? "Rouvrir la tâche" : "Marquer comme terminée"}
-                  className={`flex size-7 items-center justify-center rounded-full border ${done ? "border-mint bg-mint-soft text-mint" : "border-border-strong text-transparent hover:text-muted"}`}
+                  className={`flex size-7 items-center justify-center rounded-full border ${done ? "border-success bg-success-soft text-success" : "border-border-strong text-transparent hover:text-muted"}`}
                 >
                   {done ? <RotateCcw className="size-3.5" /> : <Check className="size-3.5" />}
                 </button>

@@ -26,11 +26,11 @@ export default async function Companies({ searchParams }: { searchParams: Promis
       <p className="text-sm text-muted">Métadonnées d&apos;abonnement uniquement : les données métier des entreprises ne sont jamais accessibles ici.</p>
       <form role="search" className="relative max-w-sm">
         <Search className="absolute left-3 top-2.5 size-4 text-muted" aria-hidden />
-        <input name="q" defaultValue={sp.q} placeholder="Nom ou e-mail du propriétaire" aria-label="Rechercher une entreprise" className="h-10 w-full rounded-full border border-border-strong bg-surface pl-9 pr-4 text-sm" />
+        <input name="q" defaultValue={sp.q} placeholder="Nom ou e-mail du propriétaire" aria-label="Rechercher une entreprise" className="h-10 w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface pl-9 pr-4 text-sm" />
         {sp.status && <input type="hidden" name="status" value={sp.status} />}
       </form>
       <PillTabs label="Statut" tabs={STATUS.map(([k, l]) => ({ href: qs({ status: k || undefined, page: undefined }), label: l, active: (sp.status ?? "") === k }))} />
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface">
+      <div className="overflow-x-auto border-y border-border">
         <table className="w-full text-sm">
           <thead className="border-b border-border text-left text-xs text-muted"><tr><th className="px-4 py-3 font-medium">Entreprise</th><th className="hidden px-4 py-3 font-medium md:table-cell">Propriétaire</th><th className="px-4 py-3 font-medium">Offre</th><th className="px-4 py-3 font-medium">Statut</th><th className="hidden px-4 py-3 font-medium md:table-cell">Membres</th><th className="hidden px-4 py-3 font-medium md:table-cell">Créée</th></tr></thead>
           <tbody>

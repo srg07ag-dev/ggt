@@ -22,7 +22,7 @@ async function Invoices({ params, searchParams }: { params: Promise<{ companyId:
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Factures</h1>
       {can(ctx.role, "sales:write") && !credit && (
-        <details className="rounded-[var(--radius-lg)] border border-border bg-surface">
+        <details className="border-y border-border">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouvelle facture</summary>
           <div className="border-t border-border p-5"><NewDraftForm companyId={companyId} type="invoice" contacts={contacts} /></div>
         </details>

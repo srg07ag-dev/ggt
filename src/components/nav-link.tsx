@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
-/** Lien du menu latéral : l'entrée de la page courante est mise en évidence (la plus spécifique l'emporte). */
+/** Lien du menu latéral : l'entrée de la page courante est en gras sur fond gris. */
 export function NavLink({ href, root, children }: { href: string; root?: boolean; children: React.ReactNode }) {
   const path = usePathname();
   const active = root ? path === href : path === href || path.startsWith(href + "/");
@@ -13,8 +13,8 @@ export function NavLink({ href, root, children }: { href: string; root?: boolean
       href={href}
       aria-current={active ? "page" : undefined}
       className={clsx(
-        "flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3 text-sm transition-colors",
-        active ? "bg-white/15 font-medium text-white shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)]" : "text-white/70 hover:bg-white/10 hover:text-white",
+        "flex h-8 shrink-0 items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 text-[13px] transition-colors",
+        active ? "bg-black/[0.07] font-semibold text-text dark:bg-white/[0.12]" : "text-text/80 hover:bg-black/[0.04] dark:hover:bg-white/[0.08]",
       )}
     >
       {children}

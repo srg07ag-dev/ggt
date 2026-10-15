@@ -6,6 +6,8 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   const cspViolations: string[] = [];
   page.on("console", (m) => { if (/content security policy/i.test(m.text())) cspViolations.push(m.text()); });
   page.on("pageerror", (e) => { if (/content security policy/i.test(e.message)) cspViolations.push(e.message); });
+  await page.goto("/login");
+  await page.screenshot({ path: `e2e/shot-login-${info.project.name}.png` });
   await signupVerified(page, "Alice Test", `alice-${tag}@test.dev`);
   await page.waitForURL("**/onboarding");
 
@@ -26,6 +28,7 @@ test("inscription → entreprise → contact, puis isolation entre comptes", asy
   await page.getByLabel("Tags").fill("vip");
   await page.getByRole("button", { name: "Ajouter le contact" }).click();
   await expect(page.getByRole("link", { name: "Client Un" })).toBeVisible();
+  await page.screenshot({ path: `e2e/shot-contacts-${info.project.name}.png` });
   await page.getByLabel("Rechercher un contact").fill("zzz");
   await page.getByLabel("Rechercher un contact").press("Enter");
   await expect(page.getByText("Aucun résultat")).toBeVisible();

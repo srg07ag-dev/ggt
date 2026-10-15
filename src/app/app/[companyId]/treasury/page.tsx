@@ -34,7 +34,7 @@ async function Treasury({ params }: { params: Promise<{ companyId: string }> }) 
       {active.length === 0 ? (
         <EmptyState icon={<Landmark className="size-6" />} title="Aucun compte de trésorerie" description="Ajoutez votre banque, votre caisse ou votre compte mobile money avec son solde actuel pour suivre votre trésorerie." />
       ) : (
-        <ul className="divide-y divide-border rounded-[var(--radius-lg)] border border-border bg-surface">
+        <ul className="divide-y divide-border border-y border-border">
           {active.map((a) => (
             <li key={a.id} className="flex items-center justify-between gap-3 px-5 py-4">
               <span><span className="font-medium">{a.name}</span><span className="block text-xs text-muted">{KINDS[a.kind] ?? a.kind}</span></span>
@@ -47,7 +47,7 @@ async function Treasury({ params }: { params: Promise<{ companyId: string }> }) 
         </ul>
       )}
       {canWrite && (
-        <details className="rounded-[var(--radius-lg)] border border-border bg-surface">
+        <details className="border-y border-border">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouveau compte</summary>
           <div className="border-t border-border p-5"><AccountForm companyId={companyId} currency={co!.currency} /></div>
         </details>

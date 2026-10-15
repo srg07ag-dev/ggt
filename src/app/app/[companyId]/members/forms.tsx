@@ -48,7 +48,7 @@ export function RoleSelect({ companyId, userId, current, roles }: { companyId: s
         aria-label="Rôle"
         disabled={pending}
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
-        className="h-9 rounded-full border border-border-strong bg-surface px-3 text-sm"
+        className="h-9 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 text-sm"
       >
         {roles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
       </select>

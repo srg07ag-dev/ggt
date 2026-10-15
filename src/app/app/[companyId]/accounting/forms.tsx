@@ -218,7 +218,7 @@ export function MappingSelect({ companyId, kind, id, current, accounts, label }:
   const [state, action] = useActionState(setMappingAction.bind(null, companyId, kind, id), undefined);
   return (
     <form action={action} className="flex items-center gap-2">
-      <select name="ledgerAccountId" defaultValue={current ?? ""} aria-label={label} onChange={(e) => e.currentTarget.form?.requestSubmit()} className="h-9 max-w-60 rounded-full border border-border-strong bg-surface px-3 text-sm">
+      <select name="ledgerAccountId" defaultValue={current ?? ""} aria-label={label} onChange={(e) => e.currentTarget.form?.requestSubmit()} className="h-9 max-w-60 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 text-sm">
         <option value="">Non associé</option>
         {accounts.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
       </select>

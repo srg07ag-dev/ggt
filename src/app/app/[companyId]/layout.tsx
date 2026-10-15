@@ -87,15 +87,15 @@ export default async function CompanyLayout({
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[248px_1fr]">
-      <aside className="side-bg p-4 text-white">
-        <div className="mb-6 flex items-center gap-2.5 px-2"><span className="grid size-8 place-items-center rounded-xl bg-gradient-to-br from-mint to-sky text-sm font-bold text-white">G</span><span className="text-base font-semibold tracking-tight">GGT</span></div>
+      <aside className="border-b border-border bg-surface-2 p-3 md:sticky md:top-0 md:h-dvh md:overflow-y-auto md:border-b-0 md:border-r">
+        <div className="mb-4 px-2.5 text-[15px] font-semibold tracking-tight">GGT</div>
         <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {groups.map((g, i) => (
-            <div key={i} className="flex gap-1 md:flex-col">
-              {g.title && <p className="hidden px-3 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-white/45 md:block">{g.title}</p>}
+            <div key={i} className="flex shrink-0 gap-1 md:flex-col">
+              {g.title && <p className="hidden px-2.5 pb-1 pt-5 text-[11px] font-semibold text-muted md:block">{g.title}</p>}
               {g.items.map((item) => (
                 <NavLink key={item.href} href={item.href} root={item.href === b}>
-                  <item.icon className="size-4" aria-hidden />
+                  <item.icon className="size-4 text-muted" strokeWidth={1.75} aria-hidden />
                   {item.label}
                 </NavLink>
               ))}
@@ -103,24 +103,24 @@ export default async function CompanyLayout({
           ))}
         </nav>
         <div className="mt-6 hidden md:block">
-          <p className="px-2.5 pb-2 text-xs font-medium uppercase tracking-wide text-white/45">Entreprises</p>
+          <p className="px-2.5 pb-1 text-[11px] font-semibold text-muted">Entreprises</p>
           {companies.map((c) => (
             <Link
               key={c.id}
               href={`/app/${c.id}`}
               aria-current={c.id === companyId ? "page" : undefined}
-              className="block truncate rounded-[var(--radius-sm)] px-2.5 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white aria-[current=page]:bg-white/15 aria-[current=page]:text-white"
+              className="block truncate rounded-[var(--radius-sm)] px-2.5 py-1.5 text-[13px] text-text/80 hover:bg-black/[0.04] aria-[current=page]:bg-black/[0.07] aria-[current=page]:font-semibold aria-[current=page]:text-text dark:hover:bg-white/[0.08] dark:aria-[current=page]:bg-white/[0.12]"
             >
               {c.name}
             </Link>
           ))}
-          <Link href="/onboarding" className="mt-1 flex items-center gap-2 px-2.5 py-1.5 text-sm text-white/60 hover:text-white">
+          <Link href="/onboarding" className="mt-1 flex items-center gap-2 px-2.5 py-1.5 text-[13px] text-muted hover:text-text">
             <Plus className="size-4" aria-hidden /> Nouvelle entreprise
           </Link>
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="flex h-14 items-center justify-between border-b border-border px-4 md:px-8">
+        <header className="flex h-12 items-center justify-between border-b border-border px-4 md:px-8">
           <span className="text-sm text-muted">{current?.name}</span>
           <span className="flex items-center gap-4 text-sm"><span className="hidden sm:inline">{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span><span className="sm:hidden text-xs text-muted">{ROLE_LABELS[membership.role]}</span><Link href="/account/security" className="text-muted hover:text-text">Sécurité</Link><SignOutButton /></span>
         </header>
