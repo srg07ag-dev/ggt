@@ -19,7 +19,7 @@ export function PillTabs({ tabs, label }: { tabs: PillTab[]; label: string }) {
           aria-current={t.active ? "page" : undefined}
           className={clsx(
             "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm transition-colors",
-            t.active ? "bg-accent font-semibold text-on-accent shadow-card" : "bg-surface text-muted hover:text-text",
+            t.active ? "bg-accent font-semibold text-on-accent shadow-card" : "glass text-muted hover:text-text",
           )}
         >
           {t.label}

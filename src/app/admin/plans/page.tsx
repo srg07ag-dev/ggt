@@ -21,7 +21,7 @@ export default async function Plans() {
         <p className="text-sm text-muted">Aucune offre n&apos;est préinstallée : créez les vôtres. Un nouveau prix ne s&apos;applique qu&apos;aux prochaines factures ; les modules et limites s&apos;appliquent tout de suite à tous les abonnés.</p>
       </div>
       {plans.length === 0 ? <Card><p className="text-sm text-muted">Aucune offre. Créez-en une ci-dessous (au moins une offre par défaut est nécessaire pour activer la facturation).</p></Card> : (
-        <ul className="divide-y divide-border rounded-[var(--radius-lg)] bg-surface shadow-card">
+        <ul className="divide-y divide-border glass rounded-[var(--radius-lg)]">
           {plans.map(({ plan: p, subscribers }) => {
             const l = p.limits as Limits;
             return (

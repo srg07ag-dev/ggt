@@ -10,7 +10,7 @@ const PRIORITY = { low: ["neutral", "Basse"], normal: ["accent", "Normale"], hig
 export function ActivityList({ companyId, rows, canWrite }: { companyId: string; rows: Row[]; canWrite: boolean }) {
   const fmt = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" });
   return (
-    <ul className="divide-y divide-border rounded-[var(--radius-lg)] bg-surface shadow-card">
+    <ul className="divide-y divide-border glass rounded-[var(--radius-lg)]">
       {rows.map((r) => {
         const overdue = r.status === "todo" && r.dueAt && r.dueAt < new Date();
         const done = r.status === "done";

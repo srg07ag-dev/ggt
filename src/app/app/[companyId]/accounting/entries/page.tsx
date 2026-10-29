@@ -40,7 +40,7 @@ async function Entries({ params, searchParams }: { params: Promise<{ companyId: 
       <h1 className="text-2xl font-semibold tracking-tight">Écritures comptables</h1>
       {canWrite && (
         accounts.length < 2 ? <Card><p className="text-sm text-muted">Créez d&apos;abord au moins deux comptes (Plan de comptes).</p></Card> : (
-          <details className="rounded-[var(--radius-lg)] bg-surface shadow-card">
+          <details className="glass rounded-[var(--radius-lg)]">
             <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouvelle écriture manuelle</summary>
             <div className="border-t border-border p-5">
               <EntryForm companyId={companyId} journals={journals.map((j) => ({ id: j.id, label: `${j.code} — ${j.name}` }))} accounts={accounts.map((a) => ({ id: a.id, label: `${a.code} — ${a.name}` }))} currency={co!.currency} defaults={{ journalId: journals.find((j) => j.kind === "misc")?.id ?? journals[0]?.id ?? "", entryDate: todayIn(co!.timezone), description: "", lines: [] }} />
@@ -52,7 +52,7 @@ async function Entries({ params, searchParams }: { params: Promise<{ companyId: 
       {rows.length === 0 ? (
         <EmptyState icon={<FileSpreadsheet className="size-6" />} title="Aucune écriture" description="Les écritures manuelles et automatiques apparaîtront ici." />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-lg)] bg-surface shadow-card">
+        <div className="overflow-x-auto glass rounded-[var(--radius-lg)]">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted"><tr><th className="px-4 py-3 font-medium">Date</th><th className="px-4 py-3 font-medium">Numéro</th><th className="px-4 py-3 font-medium">Libellé</th><th className="hidden px-4 py-3 font-medium md:table-cell">Origine</th><th className="px-4 py-3 text-right font-medium">Montant</th></tr></thead>
             <tbody>

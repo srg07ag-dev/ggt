@@ -65,6 +65,47 @@ describe("design : contrastes AA (4,5:1) sur les jetons, clair et sombre", () =>
   });
 });
 
+/** Mélange alpha d'un voile `rgb(r g b / a)` sur un fond hexadécimal. */
+function over(veil: string, base: string) {
+  const m = veil.match(/rgb\((\d+) (\d+) (\d+) \/ ([0-9.]+)\)/);
+  if (!m) throw new Error(`voile illisible : ${veil}`);
+  const [r, g, b] = [m[1], m[2], m[3]].map(Number) as [number, number, number];
+  const a = Number(m[4]);
+  const mix = [r, g, b].map((c, i) => Math.round(c * a + parseInt(base.slice(1 + i * 2, 3 + i * 2), 16) * (1 - a)).toString(16).padStart(2, "0")).join("");
+  return `#${mix}`;
+}
+const rawVar = (block: string, name: string) => block.match(new RegExp(`--${name}:\\s*(rgb\\([^)]*\\))`))?.[1] ?? "";
+
+describe("design : liquid glass, lisibilité dans le pire cas (fond le plus défavorable derrière le verre)", () => {
+  for (const [name, block, set] of [["clair", lightBlock, light], ["sombre", darkBlock, dark]] as const) {
+    it(`thème ${name} : texte et texte secondaire sur carte de verre, sur feuille de verre et carte posée sur la feuille`, () => {
+      const glass = rawVar(block, "glass") || rawVar(lightBlock, "glass");
+      const sheet = rawVar(block, "glass-sheet") || rawVar(lightBlock, "glass-sheet");
+      // fonds possibles derrière le verre : les deux bleus du cadre et les deux halos
+      for (const back of [set["frame"]!, set["frame-2"]!, set["orb-1"]!, set["orb-2"]!]) {
+        const onSheet = over(sheet, back); // feuille sur fond
+        const cases: [string, string][] = [["carte sur fond", over(glass, back)], ["feuille", onSheet], ["carte sur feuille", over(glass, onSheet)]];
+        for (const [what, bg] of cases) {
+          expect(contrast(set["text"]!, bg), `texte, ${what}, fond ${back}`).toBeGreaterThanOrEqual(4.5);
+          expect(contrast(set["text-muted"]!, bg), `texte secondaire, ${what}, fond ${back}`).toBeGreaterThanOrEqual(4.5);
+          expect(contrast(set["accent"]!, bg), `lien, ${what}, fond ${back}`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    });
+  }
+  it("texte blanc sur les tuiles de verre du bloc de synthèse (voile blanc 12 %) ≥ 4,5:1", () => {
+    for (const set of [light, dark]) {
+      for (const base of [set["frame"]!, set["frame-2"]!]) { // les tuiles reposent sur le bloc de synthèse (dégradé frame → frame-2), jamais sur un halo
+        expect(contrast(set["on-frame"]!, over("rgb(255 255 255 / 0.12)", base)), `fond ${base}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+  it("le repli sans transparence existe (navigateur sans flou et préférence système)", () => {
+    expect(css).toMatch(/@supports not \(\(backdrop-filter/);
+    expect(css).toMatch(/prefers-reduced-transparency: reduce/);
+  });
+});
+
 describe("design : cohérence", () => {
   it("aucune palette Tailwind nommée ni teinte violette dans le code", () => {
     expect(offenders(/\b(bg|text|border|ring|from|to|via)-(red|blue|green|amber|slate|gray|zinc|neutral|stone|orange|yellow|lime|emerald|teal|cyan|sky|pink|rose|violet|indigo|purple|fuchsia)-\d/)).toEqual([]);
@@ -82,7 +123,7 @@ describe("design : cohérence", () => {
     }
   });
   it("les ombres passent par les jetons (shadow-card, shadow-pop), jamais en valeur libre", () => {
-    expect(offenders(/shadow-\[|shadow-(sm|md|lg|xl|2xl)\b|box-shadow/)).toEqual([]);
+    expect(files.filter((f) => !f.endsWith("globals.css") && /shadow-\[|shadow-(sm|md|lg|xl|2xl)\b|box-shadow/.test(read(f)))).toEqual([]);
   });
   it("les couleurs passent par les jetons : pas de code hexadécimal dans les composants", () => {
     const allowed = ["globals.css", "pdf.ts"]; // le PDF n'est pas du CSS : il porte ses propres couleurs

@@ -12,7 +12,7 @@ export default async function PlatformAuditPage({ searchParams }: { searchParams
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-semibold tracking-tight">Journal de la plateforme</h1><p className="text-sm text-muted">Actions des opérateurs et événements d&apos;abonnement. En ajout seul.</p></div>
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] bg-surface shadow-card">
+      <div className="overflow-x-auto glass rounded-[var(--radius-lg)]">
         <table className="w-full text-sm">
           <thead className="border-b border-border text-left text-xs text-muted"><tr><th className="px-4 py-3 font-medium">Date</th><th className="px-4 py-3 font-medium">Action</th><th className="hidden px-4 py-3 font-medium md:table-cell">Auteur</th><th className="hidden px-4 py-3 font-medium lg:table-cell">Détail</th></tr></thead>
           <tbody>

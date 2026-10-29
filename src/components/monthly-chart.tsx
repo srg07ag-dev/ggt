@@ -25,7 +25,7 @@ export function MonthlyChart({ months, currency }: { months: MonthPoint[]; curre
   const exp = currencyExponent(currency);
   const empty = months.every((m) => m.invoicedMinor === 0 && m.receivedMinor === 0);
   if (empty) {
-    return <p className="rounded-[var(--radius-lg)] bg-surface shadow-card py-10 text-center text-sm text-muted">Le graphique apparaîtra après votre première facture émise ou votre premier paiement enregistré.</p>;
+    return <p className="glass rounded-[var(--radius-lg)] py-10 text-center text-sm text-muted">Le graphique apparaîtra après votre première facture émise ou votre premier paiement enregistré.</p>;
   }
   const W = 640, H = 240, L = 56, R = 8, T = 12, B = 28;
   const plotW = W - L - R, plotH = H - T - B;

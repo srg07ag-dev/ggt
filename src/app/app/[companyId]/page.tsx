@@ -59,7 +59,7 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
         <h1>Vue d&apos;ensemble</h1>
         <p className="text-sm text-muted">Votre activité en un coup d&apos;œil.</p>
       </div>
-      <section aria-label="Synthèse financière" className="rounded-[var(--radius-lg)] bg-gradient-to-br from-frame to-frame-2 p-5 text-on-frame shadow-pop md:p-7">
+      <section aria-label="Synthèse financière" className="rounded-[var(--radius-lg)] bg-gradient-to-br from-frame to-frame-2 p-5 text-on-frame shadow-pop ring-1 ring-white/25 md:p-7">
         <p className="text-sm text-on-frame/85">{heroLabel}</p>
         <p className="num mt-1 text-3xl font-bold tracking-tight md:text-5xl">{heroValue ?? "—"}</p>
         {heroValue === null && <p className="mt-1 text-xs text-on-frame/85">{heroHint}</p>}
@@ -69,8 +69,8 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
             ["Encaissé", sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null],
             ["Créances", sales.invoices ? formatMoney(sales.outstandingMinor, sales.currency) : null],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-[var(--radius)] bg-white/15 p-3">
-              <p className="text-xs text-on-frame/85">{label}</p>
+            <div key={label} className="glass-on-blue rounded-[var(--radius)] p-3">
+              <p className="text-xs text-on-frame">{label}</p>
               <p className="num mt-1 text-sm font-semibold md:text-lg">{value ?? "—"}</p>
             </div>
           ))}
@@ -79,7 +79,7 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
           <nav aria-label="Actions rapides" className="mt-6 flex flex-wrap gap-x-6 gap-y-4">
             {actions.map((a) => (
               <Link key={a.href} href={a.href} className="flex w-20 flex-col items-center gap-2 text-center text-xs font-medium">
-                <span className="grid size-12 place-items-center rounded-full bg-surface text-accent shadow-card">
+                <span className="grid size-12 place-items-center glass rounded-full text-accent">
                   <a.icon className="size-5" aria-hidden />
                 </span>
                 {a.label}

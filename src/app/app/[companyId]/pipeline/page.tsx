@@ -54,7 +54,7 @@ async function Pipeline({
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Pipeline commercial</h1>
       {canWrite && contacts.length > 0 && (
-        <details className="rounded-[var(--radius-lg)] bg-surface shadow-card">
+        <details className="glass rounded-[var(--radius-lg)]">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouvelle opportunité</summary>
           <div className="border-t border-border p-5"><OpportunityForm companyId={companyId} currency={currency} contacts={contacts} /></div>
         </details>
@@ -72,7 +72,7 @@ async function Pipeline({
           action={contacts.length === 0 ? <Link className="text-sm font-medium text-accent" href={`/app/${companyId}/contacts`}>Ajouter un contact</Link> : undefined}
         />
       ) : table ? (
-        <div className="overflow-x-auto rounded-[var(--radius-lg)] bg-surface shadow-card">
+        <div className="overflow-x-auto glass rounded-[var(--radius-lg)]">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted">
               <tr>{["Opportunité", "Client", "Étape", "Montant", "Probabilité", "Clôture"].map((h) => <th key={h} className="px-4 py-3 font-medium">{h}</th>)}</tr>
@@ -100,7 +100,7 @@ async function Pipeline({
             const col = opps.filter((o) => o.stageId === s.id);
             const total = col.reduce((n, o) => n + o.amountMinor, 0);
             return (
-              <section key={s.id} aria-label={s.name} className="w-64 shrink-0 space-y-3 rounded-[var(--radius-lg)] bg-surface p-3 shadow-card">
+              <section key={s.id} aria-label={s.name} className="w-64 shrink-0 space-y-3 glass rounded-[var(--radius-lg)] p-3">
                 <header className="flex items-center justify-between px-1">
                   <h3>{s.name}</h3>
                   <span className="num text-xs text-muted">{col.length}</span>

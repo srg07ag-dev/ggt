@@ -86,7 +86,7 @@ export default async function CompanyLayout({
   ];
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-frame to-frame-2 text-on-frame">
+    <div className="min-h-dvh app-bg text-on-frame">
       <header className="flex h-16 items-center gap-4 px-4 md:px-6">
         <Link href={b} className="text-xl font-bold tracking-tight">GGT</Link>
         <form action={`${b}/contacts`} role="search" className="relative mx-auto hidden w-full max-w-xl md:block">
@@ -149,7 +149,7 @@ export default async function CompanyLayout({
               {can(membership.role, "company:manage") && <> <Link href={`/app/${companyId}/billing`} className="font-medium underline">Gérer l&apos;abonnement</Link></>}
             </div>
           )}
-          <main className="min-h-[calc(100dvh-5rem)] rounded-t-[var(--radius-lg)] bg-surface-2 px-4 py-8 text-text md:rounded-[var(--radius-lg)] md:px-10">
+          <main className="min-h-[calc(100dvh-5rem)] rounded-t-[var(--radius-lg)] glass-sheet px-4 py-8 text-text md:rounded-[var(--radius-lg)] md:px-10">
             <div className="mx-auto max-w-5xl">{children}</div>
           </main>
         </div>

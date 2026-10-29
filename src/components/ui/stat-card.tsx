@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Badge } from "./badge";
 
 const TONES = {
-  neutral: { card: "bg-surface", chip: "bg-accent-soft text-accent" },
+  neutral: { card: "glass", chip: "bg-accent-soft text-accent" },
   danger: { card: "bg-danger-soft", chip: "bg-danger text-white" },
   warning: { card: "bg-warning-soft", chip: "bg-warning text-white" },
   success: { card: "bg-success-soft", chip: "bg-success text-white" },
@@ -36,7 +36,7 @@ export function StatCard({
   icon?: LucideIcon;
 }) {
   return (
-    <section className={clsx("flex flex-col gap-3 rounded-[var(--radius-lg)] p-5 shadow-card", TONES[tone].card)}>
+    <section className={clsx("flex flex-col gap-3 rounded-[var(--radius-lg)] p-5", TONES[tone].card)}>
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           {Icon && (

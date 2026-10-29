@@ -26,7 +26,7 @@ async function Periods({ params }: { params: Promise<{ companyId: string }> }) {
         <p className="text-sm text-muted">Une période clôturée verrouille ses écritures. Seul le propriétaire peut la rouvrir, avec un motif conservé dans le journal d&apos;audit.</p>
       </div>
       {rows.length > 0 && (
-        <ul className="divide-y divide-border rounded-[var(--radius-lg)] bg-surface shadow-card">
+        <ul className="divide-y divide-border glass rounded-[var(--radius-lg)]">
           {rows.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm">
               <span><span className="font-medium">{p.name}</span><span className="num block text-xs text-muted">{p.startDate} → {p.endDate}</span></span>

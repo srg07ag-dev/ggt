@@ -39,7 +39,7 @@ async function Expenses({ params }: { params: Promise<{ companyId: string }> }) 
         active.length === 0 ? (
           <Card><p className="text-sm text-muted">Créez d&apos;abord un compte de trésorerie (page Trésorerie) pour enregistrer une dépense.</p></Card>
         ) : (
-          <details className="rounded-[var(--radius-lg)] bg-surface shadow-card">
+          <details className="glass rounded-[var(--radius-lg)]">
             <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouvelle dépense</summary>
             <div className="space-y-5 border-t border-border p-5">
               <EntryForm companyId={companyId} kind="expense" today={todayIn(co!.timezone)} currency={co!.currency} accounts={active} categories={categories.filter((c) => c.kind === "expense")} parties={suppliers} />

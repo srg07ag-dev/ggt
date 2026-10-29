@@ -35,7 +35,7 @@ async function Balance({ params, searchParams }: { params: Promise<{ companyId: 
       {tb.rows.length === 0 ? (
         <EmptyState title="Aucune écriture validée" description="La balance se construit à partir des écritures validées." />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-lg)] bg-surface shadow-card">
+        <div className="overflow-x-auto glass rounded-[var(--radius-lg)]">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted"><tr><th className="px-4 py-3 font-medium">Compte</th><th className="px-4 py-3 text-right font-medium">Ouverture</th><th className="px-4 py-3 text-right font-medium">Débit</th><th className="px-4 py-3 text-right font-medium">Crédit</th><th className="px-4 py-3 text-right font-medium">Solde</th></tr></thead>
             <tbody>

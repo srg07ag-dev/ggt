@@ -30,7 +30,7 @@ export default async function Companies({ searchParams }: { searchParams: Promis
         {sp.status && <input type="hidden" name="status" value={sp.status} />}
       </form>
       <PillTabs label="Statut" tabs={STATUS.map(([k, l]) => ({ href: qs({ status: k || undefined, page: undefined }), label: l, active: (sp.status ?? "") === k }))} />
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] bg-surface shadow-card">
+      <div className="overflow-x-auto glass rounded-[var(--radius-lg)]">
         <table className="w-full text-sm">
           <thead className="border-b border-border text-left text-xs text-muted"><tr><th className="px-4 py-3 font-medium">Entreprise</th><th className="hidden px-4 py-3 font-medium md:table-cell">Propriétaire</th><th className="px-4 py-3 font-medium">Offre</th><th className="px-4 py-3 font-medium">Statut</th><th className="hidden px-4 py-3 font-medium md:table-cell">Membres</th><th className="hidden px-4 py-3 font-medium md:table-cell">Créée</th></tr></thead>
           <tbody>

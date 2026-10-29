@@ -2,7 +2,7 @@ import clsx from "clsx";
 
 /** Carte blanche arrondie à ombre douce, posée sur la feuille de contenu. */
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <section {...props} className={clsx("rounded-[var(--radius-lg)] bg-surface p-6 shadow-card", className)} />;
+  return <section {...props} className={clsx("glass rounded-[var(--radius-lg)] p-6", className)} />;
 }
 
 export function CardTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
