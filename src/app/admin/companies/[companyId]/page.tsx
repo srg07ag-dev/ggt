@@ -52,7 +52,7 @@ export default async function CompanyAdmin({ params }: { params: Promise<{ compa
                   <span className="flex items-center gap-3"><span className="num">{formatMoney(inv.amountMinor, inv.currency)}</span><Badge tone={inv.status === "paid" ? "success" : inv.status === "open" ? "warning" : "neutral"}>{inv.status === "paid" ? "Payée" : inv.status === "open" ? "À régler" : "Annulée"}</Badge></span>
                 </div>
                 {inv.status === "open" && (
-                  <div className="space-y-2 rounded-[var(--radius-sm)] bg-surface-2 p-3">
+                  <div className="space-y-2 rounded-[var(--radius-sm)] bg-surface p-3 shadow-card">
                     <MarkPaidForm invoiceId={inv.id} />
                     <ActionButton variant="secondary" confirm="Annuler cette facture ?" action={voidInvoiceAction.bind(null, inv.id)}>Annuler la facture</ActionButton>
                   </div>

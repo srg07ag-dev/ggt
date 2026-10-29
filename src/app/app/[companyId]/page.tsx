@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { FilePlus2, FileText, Hourglass, Kanban, ListChecks, Receipt, UserPlus, Users } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -39,34 +39,71 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
   const pipelineValue = open.reduce((n, o) => n + o.amountMinor, 0);
   const weighted = open.reduce((n, o) => n + Math.round((o.amountMinor * o.probability) / 100), 0);
 
+  const hasTreasury = can(ctx.role, "finance:read") && accounts.length > 0;
+  const heroLabel = hasTreasury || can(ctx.role, "finance:read") ? "Trésorerie disponible" : "Facturé net d'avoirs";
+  const heroValue = hasTreasury
+    ? formatMoney(accounts.reduce((n, a) => n + a.balanceMinor, 0), sales.currency)
+    : can(ctx.role, "finance:read") ? null : sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null;
+  const heroHint = can(ctx.role, "finance:read") ? "Ajoutez un compte de trésorerie pour suivre votre solde." : "Apparaît après votre première facture émise.";
+  const b = `/app/${companyId}`;
+  const actions = [
+    can(ctx.role, "sales:write") && { href: `${b}/invoices`, label: "Nouvelle facture", icon: FilePlus2 },
+    can(ctx.role, "sales:write") && { href: `${b}/quotes`, label: "Nouveau devis", icon: FileText },
+    can(ctx.role, "crm:write") && { href: `${b}/contacts`, label: "Nouveau contact", icon: UserPlus },
+    can(ctx.role, "finance:write") && { href: `${b}/expenses`, label: "Nouvelle dépense", icon: Receipt },
+  ].filter((x): x is { href: string; label: string; icon: typeof Receipt } => Boolean(x));
+
   return (
     <div className="space-y-8">
       <div>
         <h1>Vue d&apos;ensemble</h1>
         <p className="text-sm text-muted">Votre activité en un coup d&apos;œil.</p>
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-        <StatCard label="Contacts actifs" value={String(counts.active)}  />
+      <section aria-label="Synthèse financière" className="rounded-[var(--radius-lg)] bg-gradient-to-br from-frame to-frame-2 p-5 text-on-frame shadow-pop md:p-7">
+        <p className="text-sm text-on-frame/85">{heroLabel}</p>
+        <p className="num mt-1 text-3xl font-bold tracking-tight md:text-5xl">{heroValue ?? "—"}</p>
+        {heroValue === null && <p className="mt-1 text-xs text-on-frame/85">{heroHint}</p>}
+        <div className="mt-5 grid grid-cols-3 gap-2 md:gap-3">
+          {[
+            ["Facturé net d'avoirs", sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null],
+            ["Encaissé", sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null],
+            ["Créances", sales.invoices ? formatMoney(sales.outstandingMinor, sales.currency) : null],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-[var(--radius)] bg-white/15 p-3">
+              <p className="text-xs text-on-frame/85">{label}</p>
+              <p className="num mt-1 text-sm font-semibold md:text-lg">{value ?? "—"}</p>
+            </div>
+          ))}
+        </div>
+        {actions.length > 0 && (
+          <nav aria-label="Actions rapides" className="mt-6 flex flex-wrap gap-x-6 gap-y-4">
+            {actions.map((a) => (
+              <Link key={a.href} href={a.href} className="flex w-20 flex-col items-center gap-2 text-center text-xs font-medium">
+                <span className="grid size-12 place-items-center rounded-full bg-surface text-accent shadow-card">
+                  <a.icon className="size-5" aria-hidden />
+                </span>
+                {a.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </section>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Contacts actifs" value={String(counts.active)} icon={Users} />
         <StatCard
           label="Pipeline ouvert"
           value={currency ? formatMoney(pipelineValue, currency) : null}
           compare={currency ? `Pondéré : ${formatMoney(weighted, currency)}` : undefined}
           emptyHint="Aucune opportunité ouverte"
-          featured 
+          icon={Kanban}
         />
         <StatCard
           label="Tâches à faire"
           value={String(tasks.open)}
           delta={tasks.overdue ? `${tasks.overdue} en retard` : undefined}
-          deltaTone="danger" 
+          deltaTone="danger"
+          icon={ListChecks}
         />
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-        {can(ctx.role, "finance:read") && (
-          <StatCard label="Trésorerie disponible" value={accounts.length ? formatMoney(accounts.reduce((n, a) => n + a.balanceMinor, 0), sales.currency) : null} emptyHint="Ajoutez un compte de trésorerie" featured  />
-        )}
-        <StatCard label="Facturé TTC (net d'avoirs)" value={sales.invoices ? formatMoney(sales.invoicedMinor - sales.creditedMinor, sales.currency) : null} emptyHint="Apparaît après votre première facture émise"  />
-        <StatCard label="Encaissé" value={sales.invoices ? formatMoney(sales.receivedMinor, sales.currency) : null} emptyHint="Paiements enregistrés uniquement"  />
         <StatCard
           label="Créances clients"
           value={sales.invoices ? formatMoney(sales.outstandingMinor, sales.currency) : null}
@@ -74,7 +111,8 @@ async function Dashboard({ params }: { params: Promise<{ companyId: string }> })
           deltaTone="danger"
           tone={sales.overdueCount ? "danger" : "neutral"}
           compare={sales.overdueMinor ? `Dont en retard : ${formatMoney(sales.overdueMinor, sales.currency)}` : undefined}
-          emptyHint="Aucune facture émise" 
+          emptyHint="Aucune facture émise"
+          icon={Hourglass}
         />
       </div>
       <Card>

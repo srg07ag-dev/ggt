@@ -27,7 +27,7 @@ async function AuditPage({ params, searchParams }: { params: Promise<{ companyId
       {rows.length === 0 ? (
         <EmptyState icon={<ScrollText className="size-6" />} title="Aucune entrée" description="Les actions correspondant à ce filtre apparaîtront ici." />
       ) : (
-        <div className="overflow-x-auto border-y border-border">
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] bg-surface shadow-card">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted">
               <tr><th className="px-4 py-3 font-medium">Date</th><th className="px-4 py-3 font-medium">Action</th><th className="hidden px-4 py-3 font-medium md:table-cell">Auteur</th><th className="hidden px-4 py-3 font-medium lg:table-cell">Détail</th></tr>

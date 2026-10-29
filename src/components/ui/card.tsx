@@ -1,8 +1,8 @@
 import clsx from "clsx";
 
-/** Section à plat : un filet net au-dessus, pas de boîte. La hiérarchie vient de la typographie et de l'espacement. */
+/** Carte blanche arrondie à ombre douce, posée sur la feuille de contenu. */
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <section {...props} className={clsx("border-t border-border pt-5", className)} />;
+  return <section {...props} className={clsx("rounded-[var(--radius-lg)] bg-surface p-6 shadow-card", className)} />;
 }
 
 export function CardTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {

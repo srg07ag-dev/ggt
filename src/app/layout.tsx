@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 // La CSP utilise un nonce par requête : les pages doivent être rendues dynamiquement.
 export const dynamic = "force-dynamic";
 
-const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" });
 
 export const metadata: Metadata = {
   title: { default: "GGT", template: "%s · GGT" },
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={roboto.variable}>
+    <html lang="fr" className={jakarta.variable}>
       <body>{children}</body>
     </html>
   );

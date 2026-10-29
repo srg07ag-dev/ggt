@@ -86,32 +86,32 @@ export default async function CompanyLayout({
   ];
 
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="min-h-dvh bg-gradient-to-b from-frame to-frame-2 text-on-frame">
       <header className="flex h-16 items-center gap-4 px-4 md:px-6">
-        <Link href={b} className="text-xl font-medium tracking-tight">GGT</Link>
+        <Link href={b} className="text-xl font-bold tracking-tight">GGT</Link>
         <form action={`${b}/contacts`} role="search" className="relative mx-auto hidden w-full max-w-xl md:block">
-          <Search className="absolute left-4 top-3 size-5 text-muted" aria-hidden />
+          <Search className="absolute left-4 top-3 size-5 text-on-frame/80" aria-hidden />
           <input
             name="q"
             aria-label="Recherche rapide de contact"
             placeholder="Rechercher un contact"
-            className="h-11 w-full rounded-[var(--radius)] bg-surface-2 pl-12 pr-4 text-sm placeholder:text-muted hover:brightness-95 focus:bg-surface focus:outline-2 focus:outline-accent"
+            className="h-11 w-full rounded-[var(--radius)] bg-white/15 pl-12 pr-4 text-sm text-on-frame placeholder:text-on-frame/80 hover:bg-white/20 focus:bg-surface focus:text-text focus:placeholder:text-muted focus:outline-2 focus:outline-white"
           />
         </form>
         <span className="ml-auto flex items-center gap-4 text-sm md:ml-0">
-          <span className="hidden max-w-40 truncate text-muted lg:inline">{current?.name}</span>
-          <span className="hidden sm:inline">{user.name} <span className="text-xs text-muted">· {ROLE_LABELS[membership.role]}</span></span>
-          <span className="text-xs text-muted sm:hidden">{ROLE_LABELS[membership.role]}</span>
-          <Link href="/account/security" className="text-muted hover:text-text">Sécurité</Link>
-          <SignOutButton />
+          <span className="hidden max-w-40 truncate text-on-frame/85 lg:inline">{current?.name}</span>
+          <span className="hidden sm:inline">{user.name} <span className="text-xs text-on-frame/85">· {ROLE_LABELS[membership.role]}</span></span>
+          <span className="text-xs text-on-frame/85 sm:hidden">{ROLE_LABELS[membership.role]}</span>
+          <Link href="/account/security" className="text-on-frame/85 hover:text-on-frame">Sécurité</Link>
+          <SignOutButton className="text-on-frame/85 hover:text-on-frame" />
         </span>
       </header>
       <div className="md:grid md:grid-cols-[256px_1fr]">
-        <aside className="px-3 pb-2 md:sticky md:top-0 md:h-[calc(100dvh-4rem)] md:self-start md:overflow-y-auto md:pb-6">
+        <aside className="px-3 pb-3 md:sticky md:top-0 md:h-[calc(100dvh-4rem)] md:self-start md:overflow-y-auto md:pb-6">
           <nav aria-label="Navigation principale" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
             {groups.map((g, i) => (
               <div key={i} className="flex shrink-0 gap-1 md:flex-col">
-                {g.title && <p className="hidden px-3 pb-1 pt-5 text-xs font-medium text-muted md:block">{g.title}</p>}
+                {g.title && <p className="hidden px-3 pb-1 pt-5 text-xs font-semibold text-on-frame/80 md:block">{g.title}</p>}
                 {g.items.map((item) => (
                   <NavLink key={item.href} href={item.href} root={item.href === b}>
                     <item.icon className="size-5" strokeWidth={1.75} aria-hidden />
@@ -122,18 +122,18 @@ export default async function CompanyLayout({
             ))}
           </nav>
           <div className="mt-6 hidden md:block">
-            <p className="px-3 pb-1 text-xs font-medium text-muted">Entreprises</p>
+            <p className="px-3 pb-1 text-xs font-semibold text-on-frame/80">Entreprises</p>
             {companies.map((c) => (
               <Link
                 key={c.id}
                 href={`/app/${c.id}`}
                 aria-current={c.id === companyId ? "page" : undefined}
-                className="block truncate rounded-[var(--radius)] px-3 py-2 text-sm hover:bg-surface-2 aria-[current=page]:bg-accent-soft aria-[current=page]:font-medium aria-[current=page]:text-on-accent-soft"
+                className="block truncate rounded-[var(--radius)] px-3 py-2 text-sm text-on-frame/90 hover:bg-white/10 aria-[current=page]:bg-white/20 aria-[current=page]:font-semibold aria-[current=page]:text-on-frame"
               >
                 {c.name}
               </Link>
             ))}
-            <Link href="/onboarding" className="mt-1 flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm text-muted hover:bg-surface-2 hover:text-text">
+            <Link href="/onboarding" className="mt-1 flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm text-on-frame/90 hover:bg-white/10">
               <Plus className="size-5" aria-hidden /> Nouvelle entreprise
             </Link>
           </div>
@@ -149,7 +149,7 @@ export default async function CompanyLayout({
               {can(membership.role, "company:manage") && <> <Link href={`/app/${companyId}/billing`} className="font-medium underline">Gérer l&apos;abonnement</Link></>}
             </div>
           )}
-          <main className="min-h-[calc(100dvh-5rem)] bg-surface px-4 py-8 md:rounded-[var(--radius)] md:px-10">
+          <main className="min-h-[calc(100dvh-5rem)] rounded-t-[var(--radius-lg)] bg-surface-2 px-4 py-8 text-text md:rounded-[var(--radius-lg)] md:px-10">
             <div className="mx-auto max-w-5xl">{children}</div>
           </main>
         </div>

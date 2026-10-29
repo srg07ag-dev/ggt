@@ -1,54 +1,64 @@
 @import "tailwindcss";
 
 /*
- * Système visuel : Material Design 3 à la manière de Google (Gmail, Drive), tenu par des garde-fous stricts.
- * Cadre gris-bleu très clair, feuille de contenu blanche, un accent bleu Google, couleurs réservées aux états,
- * conteneurs tonals plutôt que bordures légères. Pas d'ombres, pas de dégradés, rayons ≤ 8 px (tests/design-guardrails).
+ * Système visuel : bleu intense, feuille arrondie, cartes blanches à ombre douce, grand bloc de synthèse.
+ * Inspiré des applications bancaires mobiles, sans reprendre aucune marque ni illustration.
+ * Garde-fous (tests/design-guardrails.test.ts) : contrastes AA, aucune teinte violette, aucune palette Tailwind nommée.
  */
 :root {
-  --bg: #f8fafd;
+  --bg: #eef3ff;
   --surface: #ffffff;
-  --surface-2: #f0f4f9;
-  --border: #c4c7c5;
-  --border-strong: #747775;
-  --text: #1f1f1f;
-  --text-muted: #444746;
-  --accent: #0b57d0;
-  --accent-hover: #0842a0;
-  --accent-soft: #d3e3fd;
+  --surface-2: #f3f6ff;
+  --border: #dde5f7;
+  --border-strong: #a9b9e0;
+  --text: #0f1b3d;
+  --text-muted: #53607f;
+  --accent: #1553f0;
+  --accent-hover: #0f43c9;
+  --accent-soft: #e3ebff;
   --on-accent: #ffffff;
-  --on-accent-soft: #041e49;
-  --success: #146c2e;
-  --success-soft: #c4eed0;
-  --warning: #6d4700;
-  --warning-soft: #ffe086;
-  --danger: #b3261e;
-  --danger-soft: #f9dedc;
-  --radius-sm: 6px;
-  --radius: 8px;
-  --radius-lg: 8px;
+  --on-accent-soft: #0b2f9e;
+  --success: #0f7a4a;
+  --success-soft: #dff5ea;
+  --warning: #8a5300;
+  --warning-soft: #fff0d1;
+  --danger: #c0261f;
+  --danger-soft: #fde6e4;
+  --frame: #1553f0;
+  --frame-2: #0c3bbd;
+  --on-frame: #ffffff;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --elev-card: 0 6px 24px rgb(21 83 240 / 0.08);
+  --elev-pop: 0 12px 40px rgb(15 27 61 / 0.18);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131314;
-    --surface: #1e1f20;
-    --surface-2: #282a2c;
-    --border: #444746;
-    --border-strong: #8e918f;
-    --text: #e3e3e3;
-    --text-muted: #c4c7c5;
-    --accent: #a8c7fa;
-    --accent-hover: #d3e3fd;
-    --accent-soft: #0842a0;
-    --on-accent: #062e6f;
-    --on-accent-soft: #d3e3fd;
-    --success: #6dd58c;
-    --success-soft: #0f5223;
-    --warning: #ffd166;
+    --bg: #0a1226;
+    --surface: #121c3a;
+    --surface-2: #18244a;
+    --border: #25336a;
+    --border-strong: #4a5ea8;
+    --text: #eaf0ff;
+    --text-muted: #a9b6dc;
+    --accent: #7ea3ff;
+    --accent-hover: #a9c1ff;
+    --accent-soft: #1c2f73;
+    --on-accent: #061a52;
+    --on-accent-soft: #dbe5ff;
+    --success: #5fdb9f;
+    --success-soft: #0f3d29;
+    --warning: #ffcf6b;
     --warning-soft: #4a3600;
-    --danger: #f2b8b5;
-    --danger-soft: #601410;
+    --danger: #ff9b94;
+    --danger-soft: #5a1713;
+    --frame: #0d2a8f;
+    --frame-2: #07185c;
+    --on-frame: #ffffff;
+    --elev-card: 0 6px 24px rgb(0 0 0 / 0.35);
+    --elev-pop: 0 12px 40px rgb(0 0 0 / 0.5);
     color-scheme: dark;
   }
 }
@@ -66,6 +76,11 @@
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
   --color-on-accent-soft: var(--on-accent-soft);
+  --color-frame: var(--frame);
+  --color-frame-2: var(--frame-2);
+  --color-on-frame: var(--on-frame);
+  --shadow-card: var(--elev-card);
+  --shadow-pop: var(--elev-pop);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
@@ -73,7 +88,7 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --radius-md: var(--radius);
-  --font-sans: "Google Sans", var(--font-roboto), Roboto, system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), "Segoe UI", system-ui, sans-serif;
 }
 
 body {
@@ -89,11 +104,11 @@ body {
 
 /*
  * Hiérarchie typographique (hors couche : elle prime sur les classes d'utilité pour rester cohérente partout).
- *   h1 titre de page 28/36 régulier · h2 titre de section 18/26 medium · h3 titre de groupe 14/20 medium · texte 14/20 · légende 12/16
+ *   h1 titre de page 28/36 gras · h2 titre de section 18/26 semi-gras · h3 titre de groupe 14/20 semi-gras · texte 14/20 · légende 12/16
  */
-h1 { font-size: 1.75rem; line-height: 2.25rem; font-weight: 400; letter-spacing: 0; }
-h2 { font-size: 1.125rem; line-height: 1.625rem; font-weight: 500; letter-spacing: 0; }
-h3 { font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; }
+h1 { font-size: 1.75rem; line-height: 2.25rem; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.125rem; line-height: 1.625rem; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; }
 
 .num { font-variant-numeric: tabular-nums; }
 a { text-underline-offset: 3px; }

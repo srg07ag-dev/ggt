@@ -18,7 +18,7 @@ async function Quotes({ params }: { params: Promise<{ companyId: string }> }) {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Devis</h1>
       {can(ctx.role, "sales:write") && (
-        <details className="border-y border-border">
+        <details className="rounded-[var(--radius-lg)] bg-surface shadow-card">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-accent">+ Nouveau devis</summary>
           <div className="border-t border-border p-5"><NewDraftForm companyId={companyId} type="quote" contacts={contacts} /></div>
         </details>

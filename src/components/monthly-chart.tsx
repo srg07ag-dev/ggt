@@ -25,7 +25,7 @@ export function MonthlyChart({ months, currency }: { months: MonthPoint[]; curre
   const exp = currencyExponent(currency);
   const empty = months.every((m) => m.invoicedMinor === 0 && m.receivedMinor === 0);
   if (empty) {
-    return <p className="border-y border-border py-10 text-center text-sm text-muted">Le graphique apparaîtra après votre première facture émise ou votre premier paiement enregistré.</p>;
+    return <p className="rounded-[var(--radius-lg)] bg-surface shadow-card py-10 text-center text-sm text-muted">Le graphique apparaîtra après votre première facture émise ou votre premier paiement enregistré.</p>;
   }
   const W = 640, H = 240, L = 56, R = 8, T = 12, B = 28;
   const plotW = W - L - R, plotH = H - T - B;
@@ -42,8 +42,9 @@ export function MonthlyChart({ months, currency }: { months: MonthPoint[]; curre
         <span className="inline-flex items-center gap-2"><span className="size-2.5 bg-accent" aria-hidden />Facturé (net d&apos;avoirs)</span>
         <span className="inline-flex items-center gap-2"><span className="size-2.5 bg-success" aria-hidden />Encaissé</span>
       </div>
-      <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Facturé et encaissé par mois sur les six derniers mois" className="h-auto w-full min-w-[480px]">
+      {/* dir="rtl" : sur petit écran, le défilement démarre à droite, donc sur les mois les plus récents */}
+      <div className="overflow-x-auto" dir="rtl">
+      <svg style={{ direction: "ltr" }} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Facturé et encaissé par mois sur les six derniers mois" className="h-auto w-full min-w-[480px]">
         {ticks.map((t) => (
           <g key={t}>
             <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={t === 0 ? 1.5 : 0.75} />

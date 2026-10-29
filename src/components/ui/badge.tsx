@@ -1,7 +1,7 @@
 import clsx from "clsx";
 
 const tones = {
-  neutral: "bg-surface-2 text-muted",
+  neutral: "bg-accent-soft text-muted",
   accent: "bg-accent-soft text-on-accent-soft",
   success: "bg-success-soft text-success",
   warning: "bg-warning-soft text-warning",
@@ -10,7 +10,7 @@ const tones = {
 
 export function Badge({ tone = "neutral", children }: { tone?: keyof typeof tones; children: React.ReactNode }) {
   return (
-    <span className={clsx("inline-flex h-5 items-center rounded-[var(--radius-sm)] px-2 text-xs font-medium", tones[tone])}>
+    <span className={clsx("inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold", tones[tone])}>
       {children}
     </span>
   );
